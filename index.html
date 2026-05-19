@@ -33,6 +33,8 @@
 
     * { box-sizing: border-box; }
 
+    [hidden] { display: none !important; }
+
     html {
       min-height: 100%;
       background: var(--page);
@@ -288,7 +290,7 @@
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1.35fr) minmax(300px, .75fr);
+      grid-template-columns: minmax(0, 1fr);
       gap: 14px;
       align-items: start;
     }
@@ -337,6 +339,17 @@
       gap: 10px;
     }
 
+    .habit-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .habit-summary .metric {
+      min-height: 58px;
+    }
+
     .habit {
       display: grid;
       gap: 12px;
@@ -352,10 +365,10 @@
     }
 
     .check-button {
-      width: 52px;
-      min-width: 52px;
+      width: 58px;
+      min-width: 58px;
       aspect-ratio: 1;
-      min-height: 52px;
+      min-height: 58px;
       border-radius: 50%;
       border: 2px solid #b8c6c0;
       background: #fff;
@@ -363,6 +376,55 @@
       font-size: 23px;
       line-height: 1;
       box-shadow: inset 0 0 0 5px #f0f6ff, 0 8px 18px rgba(17, 103, 216, .10);
+    }
+
+    .habit-status {
+      display: inline-flex;
+      width: fit-content;
+      min-height: 30px;
+      align-items: center;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: #eef3f8;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .habit-status.done {
+      background: var(--mint-soft);
+      color: var(--mint-dark);
+    }
+
+    .habit-status.frozen {
+      background: var(--blue-soft);
+      color: #17477e;
+    }
+
+    .habit-progress {
+      display: grid;
+      gap: 7px;
+    }
+
+    .habit-progress-bar {
+      height: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #dce7f3;
+      border: 1px solid #c8d8ea;
+    }
+
+    .habit-progress-bar span {
+      display: block;
+      width: var(--progress, 0%);
+      height: 100%;
+      border-radius: inherit;
+      background: var(--mint);
+    }
+
+    .graduated {
+      border-color: #d5dde8;
+      background: #f8fafc;
     }
 
     .check-button.done {
@@ -547,45 +609,6 @@
     .form-grid {
       display: grid;
       gap: 11px;
-    }
-
-    .leaderboard {
-      display: grid;
-      gap: 8px;
-    }
-
-    .rank-row {
-      display: grid;
-      grid-template-columns: 34px minmax(0, 1fr) auto;
-      gap: 9px;
-      align-items: center;
-      min-height: 52px;
-      padding: 8px;
-      border-radius: 8px;
-      background: #fff;
-      border: 1px solid var(--line);
-    }
-
-    .rank-badge {
-      width: 32px;
-      aspect-ratio: 1;
-      display: grid;
-      place-items: center;
-      border-radius: 8px;
-      background: linear-gradient(135deg, var(--blue), var(--violet));
-      color: #fff;
-      font-weight: 950;
-    }
-
-    .rank-score {
-      color: var(--mint-dark);
-      font-weight: 900;
-      white-space: nowrap;
-    }
-
-    .rank-row strong,
-    .rank-row p {
-      overflow-wrap: anywhere;
     }
 
     label {
@@ -854,15 +877,6 @@
         grid-template-columns: 1fr;
       }
 
-      .rank-row {
-        grid-template-columns: 30px minmax(0, 1fr);
-      }
-
-      .rank-score {
-        grid-column: 2;
-        justify-self: start;
-      }
-
       .weekday-picker {
         gap: 5px;
       }
@@ -902,17 +916,6 @@
       </div>
     </section>
 
-    <section class="hero-card">
-      <div class="praise" id="praiseLine">今日も開いた時点で、連続記録を守る準備はできています。</div>
-      <div class="hero-stats">
-        <div class="hero-stat"><b id="totalStreak">0</b><span>守れている日数</span></div>
-        <div class="hero-stat"><b id="freezeLeft">2</b><span>フリーズ残り</span></div>
-        <div class="hero-stat"><b id="rankLabel">Blue</b><span>今のリーグ</span></div>
-        <div class="hero-stat"><b id="xpLabel">0 XP</b><span>今週のXP</span></div>
-      </div>
-      <div class="level-bar" aria-label="次のランクまでの進捗"><span id="levelProgress"></span></div>
-    </section>
-
     <main class="layout">
       <section class="habit-panel active" data-view="today">
         <div class="section-head">
@@ -922,34 +925,15 @@
           </div>
           <button type="button" class="secondary" id="resetTodayBtn">今日をリセット</button>
         </div>
+        <div class="habit-summary">
+          <div class="metric"><b id="doneCount">0</b><span>完了</span></div>
+          <div class="metric"><b id="todoCount">0</b><span>未完了</span></div>
+          <div class="metric"><b id="activeCount">0</b><span>今日の数</span></div>
+        </div>
         <div class="habit-list" id="habitList"></div>
       </section>
 
       <aside class="stack">
-        <section class="panel active" data-view="stats">
-          <div class="section-head">
-            <div>
-              <p class="eyebrow">サマリー</p>
-              <h2>続き具合</h2>
-            </div>
-          </div>
-          <div class="metric-grid">
-            <div class="metric"><b id="doneCount">0</b><span>今日完了</span></div>
-            <div class="metric"><b id="bestStreak">0</b><span>最長ストリーク</span></div>
-            <div class="metric"><b id="activeCount">0</b><span>登録中</span></div>
-          </div>
-        </section>
-
-        <section class="panel active" data-view="stats">
-          <div class="section-head">
-            <div>
-              <p class="eyebrow">リーグ</p>
-              <h2>今週の習慣ランキング</h2>
-            </div>
-          </div>
-          <div class="leaderboard" id="leaderboard"></div>
-        </section>
-
         <section class="panel active" data-view="stats">
           <div class="section-head">
             <div>
@@ -991,9 +975,9 @@
   </div>
 
   <nav class="bottom-nav" aria-label="表示切り替え">
-    <button type="button" class="active" data-tab="today">今日</button>
-    <button type="button" data-tab="stats">記録</button>
-    <button type="button" data-tab="library">追加</button>
+    <button type="button" class="active" data-habit-tab="0">習慣1</button>
+    <button type="button" data-habit-tab="1">習慣2</button>
+    <button type="button" data-habit-tab="2">習慣3</button>
   </nav>
 
   <dialog id="habitDialog">
@@ -1065,17 +1049,10 @@
       subMessage: document.querySelector("#subMessage"),
       scoreRing: document.querySelector("#scoreRing"),
       scoreText: document.querySelector("#scoreText"),
-      praiseLine: document.querySelector("#praiseLine"),
-      totalStreak: document.querySelector("#totalStreak"),
-      freezeLeft: document.querySelector("#freezeLeft"),
-      rankLabel: document.querySelector("#rankLabel"),
-      xpLabel: document.querySelector("#xpLabel"),
-      levelProgress: document.querySelector("#levelProgress"),
       habitList: document.querySelector("#habitList"),
       doneCount: document.querySelector("#doneCount"),
-      bestStreak: document.querySelector("#bestStreak"),
+      todoCount: document.querySelector("#todoCount"),
       activeCount: document.querySelector("#activeCount"),
-      leaderboard: document.querySelector("#leaderboard"),
       calendarGrid: document.querySelector("#calendarGrid"),
       quickGrid: document.querySelector("#quickGrid"),
       toast: document.querySelector("#toast"),
@@ -1255,6 +1232,51 @@
       return streak;
     }
 
+    function daysSince(dateString) {
+      const start = new Date(dateString || new Date().toISOString());
+      const today = new Date();
+      start.setHours(0, 0, 0, 0);
+      today.setHours(0, 0, 0, 0);
+      return Math.max(0, Math.floor((today - start) / 86400000) + 1);
+    }
+
+    function isGraduated(habit) {
+      return daysSince(habit.createdAt) > 30;
+    }
+
+    function habitSort(a, b) {
+      const graduationDiff = Number(isGraduated(a)) - Number(isGraduated(b));
+      if (graduationDiff) return graduationDiff;
+      return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+    }
+
+    function habitMonthStats(habit) {
+      const created = new Date(habit.createdAt || new Date());
+      created.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      let scheduled = 0;
+      let protectedDays = 0;
+      for (let i = 0; i < 30; i += 1) {
+        const date = new Date(created);
+        date.setDate(created.getDate() + i);
+        if (date > today) break;
+        if (!habit.days.includes(date.getDay())) continue;
+        scheduled += 1;
+        const key = isoDate(date);
+        if (isDone(habit.id, key) || isFrozen(habit.id, key)) protectedDays += 1;
+      }
+      const age = Math.min(30, daysSince(habit.createdAt));
+      return {
+        age,
+        remaining: Math.max(0, 30 - age),
+        scheduled,
+        protectedDays,
+        progress: Math.min(100, Math.round((age / 30) * 100)),
+        graduated: isGraduated(habit)
+      };
+    }
+
     function renderWeek(habit) {
       const today = new Date();
       const start = new Date(today);
@@ -1273,7 +1295,10 @@
     }
 
     function renderHabits() {
-      const todayHabits = habitsFor(new Date()).sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"));
+      const todayIds = new Set(habitsFor(new Date()).map((habit) => habit.id));
+      const todayHabits = [...state.habits]
+        .filter((habit) => todayIds.has(habit.id))
+        .sort((a, b) => habitSort(a, b) || (a.time || "99:99").localeCompare(b.time || "99:99"));
       if (!todayHabits.length) {
         els.habitList.innerHTML = `
           <div class="empty">
@@ -1292,26 +1317,33 @@
         const frozen = isFrozen(habit.id);
         const streak = streakForHabit(habit);
         const freezeLeft = freezeAllowance(habit.id);
+        const month = habitMonthStats(habit);
+        const statusText = done ? "完了" : frozen ? "休みで保護" : "未完了";
+        const graduationText = month.graduated ? "30日卒業済み。記録は継続できます。" : `卒業まであと${month.remaining}日`;
         return `
-          <article class="habit ${done ? "is-done" : ""}">
+          <article class="habit ${done ? "is-done" : ""} ${month.graduated ? "graduated" : ""}" id="habit-${habit.id}">
             <div class="habit-top">
               <button type="button" class="check-button ${done ? "done pop" : ""}" aria-label="${habit.name}を${done ? "未完了" : "完了"}にする" data-toggle="${habit.id}">${done ? "✓" : ""}</button>
               <div class="habit-title">
                 <strong>${escapeHtml(habit.name)}</strong>
-                <small>${escapeHtml(habit.category)}${habit.time ? ` ・ ${habit.time}` : ""} ・ ${habit.days.map((day) => weekdays[day]).join("")}</small>
+                <small>${escapeHtml(habit.category)}${habit.time ? ` ・ ${habit.time}` : ""}</small>
+                <span class="habit-status ${done ? "done" : frozen ? "frozen" : ""}">${statusText}</span>
               </div>
               <div class="actions">
                 <button type="button" class="secondary" data-edit="${habit.id}">編集</button>
+                <button type="button" class="danger" data-delete="${habit.id}">削除</button>
                 <button type="button" class="${frozen ? "ghost" : "secondary"}" data-freeze="${habit.id}">${frozen ? "フリーズ中" : `フリーズ${freezeLeft}`}</button>
               </div>
             </div>
-            <div class="metric-grid">
-              <div class="metric"><b>${streak}</b><span>連続日数</span></div>
-              <div class="metric"><b>${habit.days.length}</b><span>週の目標</span></div>
-              <div class="metric"><b>${done ? "完了" : frozen ? "保護" : "未"}</b><span>今日</span></div>
+            <div class="habit-progress">
+              <div class="row">
+                <span class="muted">${graduationText}</span>
+                <span class="muted">${month.protectedDays}/${month.scheduled || 0}日記録</span>
+              </div>
+              <div class="habit-progress-bar" aria-label="30日習慣化の進捗"><span style="--progress: ${month.progress}%"></span></div>
             </div>
             <div class="week">${renderWeek(habit)}</div>
-            ${habit.note ? `<p class="muted">${escapeHtml(habit.note)}</p>` : ""}
+            <p class="muted">${streak}日継続 ・ ${habit.days.map((day) => weekdays[day]).join("")}${habit.note ? ` ・ ${escapeHtml(habit.note)}` : ""}</p>
           </article>
         `;
       }).join("");
@@ -1325,38 +1357,31 @@
       document.querySelectorAll("[data-freeze]").forEach((button) => {
         button.addEventListener("click", () => toggleFreeze(button.dataset.freeze));
       });
+      document.querySelectorAll("[data-delete]").forEach((button) => {
+        button.addEventListener("click", () => deleteHabitById(button.dataset.delete));
+      });
     }
 
     function renderSummary() {
       const today = completionFor(new Date());
       const percent = today.total ? Math.round(today.ratio * 100) : 0;
-      const xp = weeklyXp();
-      const rank = rankForXp(xp);
       els.scoreRing.style.setProperty("--value", `${percent * 3.6}deg`);
       els.scoreText.textContent = `${percent}%`;
       els.doneCount.textContent = today.done;
-      els.activeCount.textContent = state.habits.length;
-      els.bestStreak.textContent = Math.max(0, ...state.habits.map(streakForHabit));
-      els.totalStreak.textContent = totalProtectedStreak();
-      els.freezeLeft.textContent = Math.min(2, ...state.habits.map((habit) => freezeAllowance(habit.id)).concat([2]));
-      els.rankLabel.textContent = rank.name;
-      els.xpLabel.textContent = `${xp} XP`;
-      els.levelProgress.style.setProperty("--xp", `${rank.progress}%`);
+      els.todoCount.textContent = Math.max(0, today.total - today.protected);
+      els.activeCount.textContent = today.total;
       els.dateLabel.textContent = new Intl.DateTimeFormat("ja-JP", { dateStyle: "full" }).format(new Date());
 
       if (!today.total) {
         els.todayMessage.textContent = "今日は自由日です";
-        els.subMessage.textContent = "休み曜日はストリークを傷つけません。休みも継続の一部です。";
-        els.praiseLine.textContent = "今日は休んで大丈夫。明日の自分に余白を渡せています。";
+        els.subMessage.textContent = "今日の対象習慣はありません。必要なら習慣を追加できます。";
       } else if (today.done === today.total) {
-        els.todayMessage.textContent = "今日の習慣は完了です";
-        els.subMessage.textContent = "完璧より継続。今日の自分はちゃんと積み上げました。";
-        els.praiseLine.textContent = praiseFor(today.done, totalProtectedStreak(), xp);
+        els.todayMessage.textContent = `${today.done}/${today.total} 完了`;
+        els.subMessage.textContent = "今日の習慣は全部チェック済みです。";
       } else {
         const protectedLeft = today.total - today.protected;
-        els.todayMessage.textContent = protectedLeft ? `あと${protectedLeft}個で今日の流れを守れます` : "今日はフリーズで守れています";
-        els.subMessage.textContent = "やるならチェック、休むならフリーズ。途切れた感じにしない設計です。";
-        els.praiseLine.textContent = today.protected ? "ゼロではありません。続いている線は、今日もちゃんと残っています。" : "まず1つだけ押せば流れが変わります。小さく始めましょう。";
+        els.todayMessage.textContent = `${today.protected}/${today.total} チェック済み`;
+        els.subMessage.textContent = `未完了は${protectedLeft}個です。上のカードを押せばすぐ記録できます。`;
       }
     }
 
@@ -1428,29 +1453,6 @@
       showToast(lines[Math.min(lines.length - 1, streak % lines.length)]);
     }
 
-    function renderLeaderboard() {
-      const ranked = [...state.habits]
-        .map((habit) => ({ habit, score: habitWeeklyScore(habit), streak: streakForHabit(habit) }))
-        .sort((a, b) => b.score - a.score || b.streak - a.streak)
-        .slice(0, 5);
-
-      if (!ranked.length) {
-        els.leaderboard.innerHTML = `<div class="empty"><p>習慣を追加すると、今週のランキングが出ます。</p></div>`;
-        return;
-      }
-
-      els.leaderboard.innerHTML = ranked.map((item, index) => `
-        <div class="rank-row">
-          <div class="rank-badge">${index + 1}</div>
-          <div>
-            <strong>${escapeHtml(item.habit.name)}</strong>
-            <p class="muted">${item.streak}日継続 ・ ${escapeHtml(item.habit.category)}</p>
-          </div>
-          <div class="rank-score">${item.score} XP</div>
-        </div>
-      `).join("");
-    }
-
     function renderCalendar() {
       const today = new Date();
       const start = new Date(today);
@@ -1518,6 +1520,7 @@
         showToast("目標曜日を1つ以上選んでください");
         return;
       }
+      const existing = state.habits.find((habit) => habit.id === els.habitId.value);
 
       const payload = {
         id: els.habitId.value || crypto.randomUUID(),
@@ -1526,7 +1529,7 @@
         time: els.habitTime.value,
         note: els.habitNote.value.trim(),
         days,
-        createdAt: new Date().toISOString()
+        createdAt: existing?.createdAt || new Date().toISOString()
       };
 
       const index = state.habits.findIndex((habit) => habit.id === payload.id);
@@ -1540,7 +1543,14 @@
     }
 
     function deleteHabit() {
-      const id = els.habitId.value;
+      deleteHabitById(els.habitId.value);
+      closeHabitDialog();
+    }
+
+    function deleteHabitById(id) {
+      const habit = state.habits.find((item) => item.id === id);
+      if (!habit) return;
+      if (!confirm(`「${habit.name}」を削除しますか？記録も削除されます。`)) return;
       state.habits = state.habits.filter((habit) => habit.id !== id);
       Object.keys(state.completions).forEach((key) => {
         state.completions[key] = state.completions[key].filter((habitId) => habitId !== id);
@@ -1549,7 +1559,6 @@
         state.freezes[key] = state.freezes[key].filter((habitId) => habitId !== id);
       });
       saveState();
-      closeHabitDialog();
       render();
       showToast("削除しました");
     }
@@ -1589,11 +1598,26 @@
 
     function setActiveTab(tab) {
       activeTab = tab;
-      document.querySelectorAll("[data-tab]").forEach((button) => {
-        button.classList.toggle("active", button.dataset.tab === tab);
-      });
-      document.querySelectorAll("[data-view]").forEach((panel) => {
-        panel.classList.toggle("active", panel.dataset.view === tab || (tab === "today" && panel.dataset.view === "stats"));
+    }
+
+    function renderHabitTabs() {
+      const priorityHabits = [...state.habits].sort(habitSort).slice(0, 3);
+      document.querySelectorAll("[data-habit-tab]").forEach((button, index) => {
+        const habit = priorityHabits[index];
+        button.hidden = false;
+        if (!habit) {
+          button.textContent = `${index + 1}. 追加`;
+          button.classList.remove("active");
+          button.onclick = () => openHabitDialog();
+          return;
+        }
+        button.textContent = `${index + 1}. ${habit.name.slice(0, 5)}`;
+        button.classList.toggle("active", index === 0);
+        button.onclick = () => {
+          document.querySelectorAll("[data-habit-tab]").forEach((item) => item.classList.remove("active"));
+          button.classList.add("active");
+          document.getElementById(`habit-${habit.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        };
       });
     }
 
@@ -1617,10 +1641,9 @@
     function render() {
       renderSummary();
       renderHabits();
-      renderLeaderboard();
       renderCalendar();
       renderTemplates();
-      setActiveTab(activeTab);
+      renderHabitTabs();
     }
 
     document.querySelector("#addHabitBtn").addEventListener("click", () => openHabitDialog());
@@ -1632,10 +1655,6 @@
     document.querySelector("#restoreBtn").addEventListener("click", restoreData);
     els.form.addEventListener("submit", saveHabit);
     els.deleteHabitBtn.addEventListener("click", deleteHabit);
-    document.querySelectorAll("[data-tab]").forEach((button) => {
-      button.addEventListener("click", () => setActiveTab(button.dataset.tab));
-    });
-
     ["gesturestart", "gesturechange", "gestureend"].forEach((eventName) => {
       document.addEventListener(eventName, (event) => event.preventDefault(), { passive: false });
     });
