@@ -33,11 +33,16 @@
 
     * { box-sizing: border-box; }
 
-    html { min-height: 100%; background: var(--page); }
+    html {
+      min-height: 100%;
+      background: var(--page);
+      overflow-x: hidden;
+    }
 
     body {
       margin: 0;
       min-height: 100%;
+      overflow-x: hidden;
       background:
         radial-gradient(circle at 12% 0%, rgba(19, 118, 232, .16), transparent 28rem),
         linear-gradient(180deg, #f8fbff 0%, var(--page) 42%, #e8f2ff 100%);
@@ -67,6 +72,7 @@
       cursor: pointer;
       touch-action: manipulation;
       transition: transform .14s ease, box-shadow .14s ease, background .14s ease;
+      overflow-wrap: anywhere;
     }
 
     button:active { transform: translateY(2px) scale(.98); }
@@ -101,6 +107,7 @@
     input,
     select,
     textarea {
+      min-width: 0;
       width: 100%;
       min-height: 44px;
       border: 1px solid #c4cbd4;
@@ -125,7 +132,9 @@
 
     .app {
       min-height: 100vh;
+      min-height: 100dvh;
       max-width: 1120px;
+      width: 100%;
       margin: 0 auto;
       padding: env(safe-area-inset-top) 12px calc(86px + env(safe-area-inset-bottom));
     }
@@ -138,7 +147,7 @@
       grid-template-columns: 1fr auto;
       gap: 12px;
       align-items: center;
-      margin: 0 -12px;
+      margin: 0;
       padding: 14px max(12px, env(safe-area-inset-left)) 12px max(12px, env(safe-area-inset-left));
       background: rgba(238, 246, 255, .92);
       border-bottom: 1px solid rgba(217, 222, 229, .86);
@@ -304,6 +313,7 @@
       gap: 10px;
       align-items: center;
       justify-content: space-between;
+      min-width: 0;
     }
 
     .section-head {
@@ -315,6 +325,7 @@
       flex-wrap: wrap;
       gap: 8px;
       align-items: center;
+      min-width: 0;
     }
 
     .habit-list {
@@ -541,7 +552,7 @@
 
     .rank-row {
       display: grid;
-      grid-template-columns: 34px 1fr auto;
+      grid-template-columns: 34px minmax(0, 1fr) auto;
       gap: 9px;
       align-items: center;
       min-height: 52px;
@@ -566,6 +577,11 @@
       color: var(--mint-dark);
       font-weight: 900;
       white-space: nowrap;
+    }
+
+    .rank-row strong,
+    .rank-row p {
+      overflow-wrap: anywhere;
     }
 
     label {
@@ -651,8 +667,9 @@
 
     dialog {
       width: min(560px, calc(100vw - 24px));
-      max-height: min(780px, calc(100vh - 24px));
-      overflow: auto;
+      max-width: calc(100vw - 24px);
+      max-height: min(780px, calc(100dvh - 24px));
+      overflow: hidden;
       padding: 0;
     }
 
@@ -664,7 +681,24 @@
     .dialog-inner {
       display: grid;
       gap: 12px;
+      max-height: min(780px, calc(100dvh - 24px));
+      overflow-y: auto;
+      overscroll-behavior: contain;
       padding: 16px;
+    }
+
+    .dialog-actions {
+      position: sticky;
+      bottom: 0;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding-top: 10px;
+      background: linear-gradient(180deg, rgba(255,255,255,.82), #fff 30%);
+    }
+
+    .dialog-actions .danger {
+      grid-column: 1 / -1;
     }
 
     .toast {
@@ -724,9 +758,7 @@
       }
 
       .metric-grid {
-        grid-template-columns: repeat(3, minmax(86px, 1fr));
-        overflow-x: auto;
-        padding-bottom: 2px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
 
       .panel[data-view],
@@ -742,6 +774,39 @@
       .bottom-nav {
         display: grid;
       }
+
+      dialog {
+        width: calc(100vw - 16px);
+        max-width: calc(100vw - 16px);
+        max-height: calc(100dvh - 16px);
+        margin: auto;
+      }
+
+      .dialog-inner {
+        max-height: calc(100dvh - 16px);
+        padding: 12px;
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+      }
+
+      .dialog-inner input,
+      .dialog-inner select {
+        min-height: 42px;
+      }
+
+      .dialog-inner textarea {
+        min-height: 76px;
+      }
+
+      .dialog-inner .section-head {
+        position: sticky;
+        top: -12px;
+        z-index: 3;
+        margin: -12px -12px 0;
+        padding: 12px;
+        background: rgba(255, 255, 255, .96);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(14px);
+      }
     }
 
     @media (max-width: 420px) {
@@ -756,6 +821,14 @@
         grid-template-columns: 1fr 44px;
       }
 
+      .section-head {
+        align-items: start;
+      }
+
+      .section-head h2 {
+        overflow-wrap: anywhere;
+      }
+
       .habit-top {
         grid-template-columns: auto 1fr;
       }
@@ -768,6 +841,28 @@
 
       .quick-grid,
       .inline-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .rank-row {
+        grid-template-columns: 30px minmax(0, 1fr);
+      }
+
+      .rank-score {
+        grid-column: 2;
+        justify-self: start;
+      }
+
+      .weekday-picker {
+        gap: 5px;
+      }
+
+      .weekday-picker label,
+      .weekday-picker span {
+        min-height: 36px;
+      }
+
+      .dialog-actions {
         grid-template-columns: 1fr;
       }
     }
@@ -930,7 +1025,7 @@
         メモ
         <textarea id="habitNote" maxlength="120" placeholder="続けるコツや、終わった後の気分など"></textarea>
       </label>
-      <div class="actions">
+      <div class="actions dialog-actions">
         <button type="submit">保存</button>
         <button type="button" class="secondary" id="cancelDialogBtn">キャンセル</button>
         <button type="button" class="danger" id="deleteHabitBtn">削除</button>
