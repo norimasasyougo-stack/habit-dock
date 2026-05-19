@@ -1,0 +1,1537 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#eef6ff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Habit Dock">
+  <title>Habit Dock</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #22252b;
+      --muted: #666f7d;
+      --quiet: #8a93a1;
+      --line: #d6e0ec;
+      --page: #eef6ff;
+      --panel: #ffffff;
+      --panel-soft: #f6faff;
+      --mint: #1376e8;
+      --mint-dark: #0b56b3;
+      --mint-soft: #dcecff;
+      --blue: #1167d8;
+      --blue-soft: #e2f0ff;
+      --rose: #b33b52;
+      --rose-soft: #fae5ea;
+      --gold: #8b5e00;
+      --gold-soft: #fff0ca;
+      --violet: #4f46e5;
+      --violet-soft: #e9edff;
+      --shadow: 0 18px 48px rgba(17, 103, 216, .14);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { min-height: 100%; background: var(--page); }
+
+    body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(19, 118, 232, .16), transparent 28rem),
+        linear-gradient(180deg, #f8fbff 0%, var(--page) 42%, #e8f2ff 100%);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      letter-spacing: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      min-height: 44px;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      background: var(--mint);
+      color: #fff;
+      font-weight: 800;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: transform .14s ease, box-shadow .14s ease, background .14s ease;
+    }
+
+    button:active { transform: translateY(2px) scale(.98); }
+    button:hover { background: var(--mint-dark); }
+
+    button.secondary {
+      background: #e9edf1;
+      color: var(--ink);
+    }
+
+    button.secondary:hover { background: #dfe5ea; }
+
+    button.ghost {
+      background: transparent;
+      color: var(--blue);
+      border: 1px solid #aec4dd;
+    }
+
+    button.danger {
+      background: var(--rose);
+    }
+
+    button.icon {
+      width: 44px;
+      min-width: 44px;
+      padding: 0;
+      display: inline-grid;
+      place-items: center;
+      font-size: 20px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid #c4cbd4;
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+      outline: 4px solid rgba(37, 91, 156, .24);
+      outline-offset: 2px;
+    }
+
+    .app {
+      min-height: 100vh;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: env(safe-area-inset-top) 12px calc(86px + env(safe-area-inset-bottom));
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin: 0 -12px;
+      padding: 14px max(12px, env(safe-area-inset-left)) 12px max(12px, env(safe-area-inset-left));
+      background: rgba(238, 246, 255, .92);
+      border-bottom: 1px solid rgba(217, 222, 229, .86);
+      backdrop-filter: blur(16px);
+    }
+
+    h1,
+    h2,
+    h3,
+    p { margin: 0; }
+
+    h1 {
+      font-size: 24px;
+      line-height: 1.1;
+    }
+
+    h2 {
+      font-size: 18px;
+      line-height: 1.25;
+    }
+
+    h3 {
+      font-size: 15px;
+      line-height: 1.3;
+    }
+
+    .eyebrow {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .today-strip {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+      padding: 18px 0 12px;
+    }
+
+    .score-ring {
+      --value: 0deg;
+      width: 86px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(var(--mint) var(--value), #d7e4f2 0);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .04);
+    }
+
+    .score-ring span {
+      width: 64px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #fff;
+      color: var(--ink);
+      font-size: 21px;
+      font-weight: 900;
+    }
+
+    .hero-card {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding: 14px;
+      border: 1px solid #bed3ef;
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.96), rgba(220,236,255,.88)),
+        radial-gradient(circle at 85% 10%, rgba(233, 237, 255, .96), transparent 18rem);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .hero-stat {
+      min-height: 74px;
+      display: grid;
+      align-content: center;
+      gap: 3px;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(217, 222, 229, .9);
+    }
+
+    .hero-stat b {
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .hero-stat span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .level-bar {
+      height: 12px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #dce5e0;
+      border: 1px solid #c9d4cf;
+    }
+
+    .level-bar span {
+      display: block;
+      width: var(--xp, 0%);
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--mint), var(--blue));
+      transition: width .35s ease;
+    }
+
+    .praise {
+      min-height: 42px;
+      display: flex;
+      gap: 9px;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #e2f0ff, #e9edff);
+      color: #143f7b;
+      font-weight: 850;
+      border: 1px solid #b9d4f4;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(300px, .75fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel,
+    .habit,
+    dialog {
+      background: rgba(255, 255, 255, .94);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      padding: 14px;
+    }
+
+    .section-head,
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .section-head {
+      margin-bottom: 12px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .habit-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .habit {
+      display: grid;
+      gap: 12px;
+      padding: 13px;
+      box-shadow: 0 10px 26px rgba(34, 37, 43, .07);
+    }
+
+    .habit-top {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .check-button {
+      width: 52px;
+      min-width: 52px;
+      aspect-ratio: 1;
+      min-height: 52px;
+      border-radius: 50%;
+      border: 2px solid #b8c6c0;
+      background: #fff;
+      color: var(--quiet);
+      font-size: 23px;
+      line-height: 1;
+      box-shadow: inset 0 0 0 5px #f0f6ff, 0 8px 18px rgba(17, 103, 216, .10);
+    }
+
+    .check-button.done {
+      border-color: var(--mint);
+      background: var(--mint);
+      color: #fff;
+      box-shadow: inset 0 0 0 5px rgba(255, 255, 255, .18), 0 12px 24px rgba(19, 118, 232, .28);
+    }
+
+    .check-button.pop {
+      animation: pop .34s ease;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(.86); }
+      55% { transform: scale(1.14); }
+      100% { transform: scale(1); }
+    }
+
+    .habit-title {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .habit-title strong {
+      overflow-wrap: anywhere;
+      font-size: 17px;
+      line-height: 1.25;
+    }
+
+    .habit-title small,
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      min-height: 64px;
+      padding: 8px;
+      border-radius: 8px;
+      background: var(--panel-soft);
+      border: 1px solid #e4e8ed;
+    }
+
+    .metric b {
+      display: block;
+      font-size: 20px;
+      line-height: 1.1;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .week {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .day-dot {
+      min-height: 34px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #dde3e8;
+      background: #f6f8f7;
+      color: var(--quiet);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .day-dot.done {
+      background: var(--mint-soft);
+      border-color: #9fd2c5;
+      color: #064c40;
+    }
+
+    .day-dot.frozen {
+      background: var(--blue-soft);
+      border-color: #a7c0df;
+      color: #17477e;
+    }
+
+    .habit.is-done {
+      border-color: #9fc5f3;
+      background: linear-gradient(180deg, #fff, #f4f9ff);
+    }
+
+    .day-dot.missed {
+      background: var(--rose-soft);
+      border-color: #efbdc8;
+      color: #813143;
+    }
+
+    .empty {
+      display: grid;
+      gap: 10px;
+      min-height: 210px;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+      color: var(--muted);
+      border: 1px dashed #c4cbd4;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .62);
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .quick {
+      display: grid;
+      gap: 4px;
+      min-height: 74px;
+      align-content: center;
+      text-align: left;
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .quick span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .calendar div {
+      min-height: 38px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: #f4f6f8;
+      color: var(--quiet);
+      font-size: 12px;
+      font-weight: 800;
+      border: 1px solid #e2e6eb;
+    }
+
+    .calendar .full {
+      background: var(--mint);
+      color: #fff;
+      border-color: var(--mint);
+    }
+
+    .calendar .partial {
+      background: var(--gold-soft);
+      color: #5e4200;
+      border-color: #e8c46c;
+    }
+
+    .calendar .frozen {
+      background: var(--blue-soft);
+      color: #17477e;
+      border-color: #a7c0df;
+    }
+
+    .calendar .today {
+      outline: 3px solid rgba(37, 91, 156, .25);
+      outline-offset: 1px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 11px;
+    }
+
+    .leaderboard {
+      display: grid;
+      gap: 8px;
+    }
+
+    .rank-row {
+      display: grid;
+      grid-template-columns: 34px 1fr auto;
+      gap: 9px;
+      align-items: center;
+      min-height: 52px;
+      padding: 8px;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .rank-badge {
+      width: 32px;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--blue), var(--violet));
+      color: #fff;
+      font-weight: 950;
+    }
+
+    .rank-score {
+      color: var(--mint-dark);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: #344052;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .inline-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .weekday-picker {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .weekday-picker label {
+      display: block;
+      position: relative;
+      min-height: 40px;
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .weekday-picker input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .weekday-picker span {
+      display: grid;
+      min-height: 40px;
+      place-items: center;
+      border-radius: 8px;
+      border: 1px solid #cbd3dc;
+      background: #fff;
+      font-weight: 900;
+    }
+
+    .weekday-picker input:checked + span {
+      color: #fff;
+      background: var(--blue);
+      border-color: var(--blue);
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 10;
+      display: none;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      padding: 8px max(12px, env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-right));
+      background: rgba(255, 255, 255, .94);
+      border-top: 1px solid var(--line);
+      backdrop-filter: blur(16px);
+    }
+
+    .bottom-nav button {
+      min-height: 52px;
+      padding: 6px 8px;
+      background: #eef2f4;
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      gap: 1px;
+      font-size: 12px;
+    }
+
+    .bottom-nav button.active {
+      background: var(--mint);
+      color: #fff;
+    }
+
+    dialog {
+      width: min(560px, calc(100vw - 24px));
+      max-height: min(780px, calc(100vh - 24px));
+      overflow: auto;
+      padding: 0;
+    }
+
+    dialog::backdrop {
+      background: rgba(17, 24, 39, .32);
+      backdrop-filter: blur(2px);
+    }
+
+    .dialog-inner {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(82px + env(safe-area-inset-bottom));
+      z-index: 20;
+      max-width: min(460px, calc(100vw - 28px));
+      transform: translate(-50%, 18px);
+      opacity: 0;
+      pointer-events: none;
+      padding: 11px 14px;
+      border-radius: 8px;
+      background: #20252c;
+      color: #fff;
+      font-weight: 750;
+      transition: .22s ease;
+      box-shadow: var(--shadow);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    @media (max-width: 820px) {
+      body { font-size: 15px; }
+
+      .app {
+        padding-left: max(10px, env(safe-area-inset-left));
+        padding-right: max(10px, env(safe-area-inset-right));
+      }
+
+      header {
+        padding-right: max(10px, env(safe-area-inset-right));
+      }
+
+      h1 { font-size: 22px; }
+
+      .today-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .score-ring {
+        justify-self: start;
+        width: 78px;
+      }
+
+      .score-ring span { width: 58px; }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .metric-grid {
+        grid-template-columns: repeat(3, minmax(86px, 1fr));
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+
+      .panel[data-view],
+      .habit-panel[data-view] {
+        display: none;
+      }
+
+      .panel[data-view].active,
+      .habit-panel[data-view].active {
+        display: block;
+      }
+
+      .bottom-nav {
+        display: grid;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .app { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
+
+      header {
+        grid-template-columns: 1fr;
+      }
+
+      header .actions {
+        display: grid;
+        grid-template-columns: 1fr 44px;
+      }
+
+      .habit-top {
+        grid-template-columns: auto 1fr;
+      }
+
+      .habit-top .actions {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .quick-grid,
+      .inline-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <p class="eyebrow" id="dateLabel">今日</p>
+        <h1>Habit Dock</h1>
+      </div>
+      <div class="actions">
+        <button type="button" id="addHabitBtn">習慣を追加</button>
+        <button type="button" class="icon secondary" id="exportBtn" title="データを書き出し">⇧</button>
+      </div>
+    </header>
+
+    <section class="today-strip">
+      <div class="stack">
+        <p class="eyebrow">今日の進捗</p>
+        <h2 id="todayMessage">今日の連続記録を守りましょう</h2>
+        <p class="muted" id="subMessage">習慣を登録すると、今日やることがここに並びます。</p>
+      </div>
+      <div class="score-ring" id="scoreRing" aria-label="今日の達成率">
+        <span id="scoreText">0%</span>
+      </div>
+    </section>
+
+    <section class="hero-card">
+      <div class="praise" id="praiseLine">今日も開いた時点で、連続記録を守る準備はできています。</div>
+      <div class="hero-stats">
+        <div class="hero-stat"><b id="totalStreak">0</b><span>守れている日数</span></div>
+        <div class="hero-stat"><b id="freezeLeft">2</b><span>フリーズ残り</span></div>
+        <div class="hero-stat"><b id="rankLabel">Blue</b><span>今のリーグ</span></div>
+        <div class="hero-stat"><b id="xpLabel">0 XP</b><span>今週のXP</span></div>
+      </div>
+      <div class="level-bar" aria-label="次のランクまでの進捗"><span id="levelProgress"></span></div>
+    </section>
+
+    <main class="layout">
+      <section class="habit-panel active" data-view="today">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">チェックリスト</p>
+            <h2>今日の習慣</h2>
+          </div>
+          <button type="button" class="secondary" id="resetTodayBtn">今日をリセット</button>
+        </div>
+        <div class="habit-list" id="habitList"></div>
+      </section>
+
+      <aside class="stack">
+        <section class="panel active" data-view="stats">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">サマリー</p>
+              <h2>続き具合</h2>
+            </div>
+          </div>
+          <div class="metric-grid">
+            <div class="metric"><b id="doneCount">0</b><span>今日完了</span></div>
+            <div class="metric"><b id="bestStreak">0</b><span>最長ストリーク</span></div>
+            <div class="metric"><b id="activeCount">0</b><span>登録中</span></div>
+          </div>
+        </section>
+
+        <section class="panel active" data-view="stats">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">リーグ</p>
+              <h2>今週の習慣ランキング</h2>
+            </div>
+          </div>
+          <div class="leaderboard" id="leaderboard"></div>
+        </section>
+
+        <section class="panel active" data-view="stats">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">30日ログ</p>
+              <h2>月間カレンダー</h2>
+            </div>
+          </div>
+          <div class="calendar" id="calendarGrid"></div>
+        </section>
+
+        <section class="panel" data-view="library">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">テンプレート</p>
+              <h2>すぐ始める</h2>
+            </div>
+          </div>
+          <div class="quick-grid" id="quickGrid"></div>
+        </section>
+
+        <section class="panel" data-view="library">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">バックアップ</p>
+              <h2>データ管理</h2>
+            </div>
+          </div>
+          <div class="stack">
+            <button type="button" class="ghost" id="copyBackupBtn">バックアップをコピー</button>
+            <label>
+              バックアップを復元
+              <textarea id="restoreInput" placeholder="コピーしたバックアップ文字列を貼り付け"></textarea>
+            </label>
+            <button type="button" class="secondary" id="restoreBtn">復元する</button>
+          </div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <nav class="bottom-nav" aria-label="表示切り替え">
+    <button type="button" class="active" data-tab="today">今日</button>
+    <button type="button" data-tab="stats">記録</button>
+    <button type="button" data-tab="library">追加</button>
+  </nav>
+
+  <dialog id="habitDialog">
+    <form method="dialog" class="dialog-inner" id="habitForm">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow" id="dialogMode">新しい習慣</p>
+          <h2>習慣を編集</h2>
+        </div>
+        <button type="button" class="icon secondary" id="closeDialogBtn" title="閉じる">×</button>
+      </div>
+
+      <input type="hidden" id="habitId">
+      <label>
+        習慣名
+        <input id="habitName" required maxlength="28" placeholder="例: 朝のストレッチ">
+      </label>
+      <div class="inline-grid">
+        <label>
+          カテゴリ
+          <select id="habitCategory">
+            <option>健康</option>
+            <option>学習</option>
+            <option>仕事</option>
+            <option>暮らし</option>
+            <option>心のケア</option>
+          </select>
+        </label>
+        <label>
+          時刻
+          <input id="habitTime" type="time">
+        </label>
+      </div>
+      <label>
+        目標曜日
+        <div class="weekday-picker" id="weekdayPicker"></div>
+      </label>
+      <label>
+        メモ
+        <textarea id="habitNote" maxlength="120" placeholder="続けるコツや、終わった後の気分など"></textarea>
+      </label>
+      <div class="actions">
+        <button type="submit">保存</button>
+        <button type="button" class="secondary" id="cancelDialogBtn">キャンセル</button>
+        <button type="button" class="danger" id="deleteHabitBtn">削除</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const STORAGE_KEY = "habit-dock-v1";
+    const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+    const templates = [
+      { name: "英語スピーキング", category: "学習", time: "20:00", note: "1レッスンだけ。日曜は休みでOK。", days: [1,2,3,4,5,6] },
+      { name: "朝の水を飲む", category: "健康", time: "07:00", note: "起きたらコップ一杯。", days: [0,1,2,3,4,5,6] },
+      { name: "10分だけ読書", category: "学習", time: "21:30", note: "ページ数より着席を勝ちにする。", days: [1,2,3,4,5] },
+      { name: "部屋を5分リセット", category: "暮らし", time: "20:30", note: "床と机の上だけ見る。", days: [1,2,3,4,5] },
+      { name: "今日のひとことメモ", category: "心のケア", time: "22:00", note: "よかったことを一行。", days: [0,1,2,3,4,5,6] }
+    ];
+
+    let state = loadState();
+    let activeTab = "today";
+
+    const els = {
+      dateLabel: document.querySelector("#dateLabel"),
+      todayMessage: document.querySelector("#todayMessage"),
+      subMessage: document.querySelector("#subMessage"),
+      scoreRing: document.querySelector("#scoreRing"),
+      scoreText: document.querySelector("#scoreText"),
+      praiseLine: document.querySelector("#praiseLine"),
+      totalStreak: document.querySelector("#totalStreak"),
+      freezeLeft: document.querySelector("#freezeLeft"),
+      rankLabel: document.querySelector("#rankLabel"),
+      xpLabel: document.querySelector("#xpLabel"),
+      levelProgress: document.querySelector("#levelProgress"),
+      habitList: document.querySelector("#habitList"),
+      doneCount: document.querySelector("#doneCount"),
+      bestStreak: document.querySelector("#bestStreak"),
+      activeCount: document.querySelector("#activeCount"),
+      leaderboard: document.querySelector("#leaderboard"),
+      calendarGrid: document.querySelector("#calendarGrid"),
+      quickGrid: document.querySelector("#quickGrid"),
+      toast: document.querySelector("#toast"),
+      dialog: document.querySelector("#habitDialog"),
+      form: document.querySelector("#habitForm"),
+      habitId: document.querySelector("#habitId"),
+      habitName: document.querySelector("#habitName"),
+      habitCategory: document.querySelector("#habitCategory"),
+      habitTime: document.querySelector("#habitTime"),
+      habitNote: document.querySelector("#habitNote"),
+      weekdayPicker: document.querySelector("#weekdayPicker"),
+      deleteHabitBtn: document.querySelector("#deleteHabitBtn"),
+      dialogMode: document.querySelector("#dialogMode"),
+      restoreInput: document.querySelector("#restoreInput")
+    };
+
+    function isoDate(date = new Date()) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function loadState() {
+      const fallback = {
+        habits: [
+          {
+            id: crypto.randomUUID(),
+            name: "朝のストレッチ",
+            category: "健康",
+            time: "07:30",
+            note: "首、肩、背中をゆっくり伸ばす。",
+            days: [0,1,2,3,4,5,6],
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: crypto.randomUUID(),
+            name: "英語を5分",
+            category: "学習",
+            time: "20:00",
+            note: "短くてもアプリを開いたら勝ち。",
+            days: [1,2,3,4,5],
+            createdAt: new Date().toISOString()
+          }
+        ],
+        completions: {},
+        freezes: {}
+      };
+
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (saved && Array.isArray(saved.habits) && saved.completions) {
+          return { ...saved, freezes: saved.freezes || {} };
+        }
+      } catch (error) {
+        console.warn(error);
+      }
+      return fallback;
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function habitsFor(date) {
+      return state.habits.filter((habit) => habit.days.includes(date.getDay()));
+    }
+
+    function doneSet(dateKey = isoDate()) {
+      return new Set(state.completions[dateKey] || []);
+    }
+
+    function freezeSet(dateKey = isoDate()) {
+      return new Set(state.freezes?.[dateKey] || []);
+    }
+
+    function isDone(habitId, dateKey = isoDate()) {
+      return doneSet(dateKey).has(habitId);
+    }
+
+    function isFrozen(habitId, dateKey = isoDate()) {
+      return freezeSet(dateKey).has(habitId);
+    }
+
+    function toggleHabit(habitId) {
+      const key = isoDate();
+      const set = doneSet(key);
+      const frozen = freezeSet(key);
+      if (set.has(habitId)) set.delete(habitId);
+      else {
+        set.add(habitId);
+        frozen.delete(habitId);
+      }
+      state.completions[key] = [...set];
+      state.freezes[key] = [...frozen];
+      saveState();
+      render();
+      if (set.has(habitId)) celebrate(habitId);
+    }
+
+    function toggleFreeze(habitId) {
+      const key = isoDate();
+      if (isDone(habitId, key)) {
+        showToast("完了済みなのでフリーズは不要です");
+        return;
+      }
+      const available = freezeAllowance(habitId);
+      const frozen = freezeSet(key);
+      if (!frozen.has(habitId) && available <= 0) {
+        showToast("フリーズは2日まで。3日目は再開の日です");
+        return;
+      }
+      if (frozen.has(habitId)) frozen.delete(habitId);
+      else frozen.add(habitId);
+      state.freezes[key] = [...frozen];
+      saveState();
+      render();
+      showToast(frozen.has(habitId) ? "今日はフリーズで守りました" : "フリーズを戻しました");
+    }
+
+    function completionFor(date) {
+      const scheduled = habitsFor(date);
+      if (!scheduled.length) return { total: 0, done: 0, frozen: 0, protected: 0, ratio: 0 };
+      const set = doneSet(isoDate(date));
+      const frozen = freezeSet(isoDate(date));
+      const done = scheduled.filter((habit) => set.has(habit.id)).length;
+      const frozenCount = scheduled.filter((habit) => frozen.has(habit.id)).length;
+      const protectedCount = done + frozenCount;
+      return { total: scheduled.length, done, frozen: frozenCount, protected: protectedCount, ratio: protectedCount / scheduled.length };
+    }
+
+    function streakForHabit(habit) {
+      let streak = 0;
+      let freezesUsed = 0;
+      const date = new Date();
+      for (let i = 0; i < 365; i += 1) {
+        const key = isoDate(date);
+        const scheduled = habit.days.includes(date.getDay());
+        if (scheduled && isDone(habit.id, key)) streak += 1;
+        else if (scheduled && isFrozen(habit.id, key) && freezesUsed < 2) {
+          streak += 1;
+          freezesUsed += 1;
+        } else if (scheduled) break;
+        date.setDate(date.getDate() - 1);
+      }
+      return streak;
+    }
+
+    function freezeAllowance(habitId) {
+      const habit = state.habits.find((item) => item.id === habitId);
+      if (!habit) return 0;
+      let used = 0;
+      const date = new Date();
+      for (let i = 0; i < 30; i += 1) {
+        const key = isoDate(date);
+        const scheduled = habit.days.includes(date.getDay());
+        if (scheduled && isFrozen(habit.id, key)) used += 1;
+        else if (scheduled && !isDone(habit.id, key)) break;
+        date.setDate(date.getDate() - 1);
+      }
+      return Math.max(0, 2 - used);
+    }
+
+    function totalProtectedStreak() {
+      let streak = 0;
+      const date = new Date();
+      for (let i = 0; i < 365; i += 1) {
+        const info = completionFor(date);
+        if (!info.total) {
+          date.setDate(date.getDate() - 1);
+          continue;
+        }
+        if (info.protected === info.total) streak += 1;
+        else break;
+        date.setDate(date.getDate() - 1);
+      }
+      return streak;
+    }
+
+    function renderWeek(habit) {
+      const today = new Date();
+      const start = new Date(today);
+      start.setDate(today.getDate() - 6);
+      return Array.from({ length: 7 }, (_, index) => {
+        const date = new Date(start);
+        date.setDate(start.getDate() + index);
+        const scheduled = habit.days.includes(date.getDay());
+        const key = isoDate(date);
+        const done = isDone(habit.id, key);
+        const frozen = isFrozen(habit.id, key);
+        const cls = done ? "done" : frozen ? "frozen" : scheduled && date < new Date(isoDate()) ? "missed" : "";
+        const mark = done ? "✓" : frozen ? "氷" : weekdays[date.getDay()];
+        return `<div class="day-dot ${cls}" title="${key}">${mark}</div>`;
+      }).join("");
+    }
+
+    function renderHabits() {
+      const todayHabits = habitsFor(new Date()).sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"));
+      if (!todayHabits.length) {
+        els.habitList.innerHTML = `
+          <div class="empty">
+            <div>
+              <h2>今日の習慣は空です</h2>
+              <p>右上の「習慣を追加」から、まずは1つだけ置いてみましょう。</p>
+            </div>
+            <button type="button" onclick="openHabitDialog()">習慣を追加</button>
+          </div>
+        `;
+        return;
+      }
+
+      els.habitList.innerHTML = todayHabits.map((habit) => {
+        const done = isDone(habit.id);
+        const frozen = isFrozen(habit.id);
+        const streak = streakForHabit(habit);
+        const freezeLeft = freezeAllowance(habit.id);
+        return `
+          <article class="habit ${done ? "is-done" : ""}">
+            <div class="habit-top">
+              <button type="button" class="check-button ${done ? "done pop" : ""}" aria-label="${habit.name}を${done ? "未完了" : "完了"}にする" data-toggle="${habit.id}">${done ? "✓" : ""}</button>
+              <div class="habit-title">
+                <strong>${escapeHtml(habit.name)}</strong>
+                <small>${escapeHtml(habit.category)}${habit.time ? ` ・ ${habit.time}` : ""} ・ ${habit.days.map((day) => weekdays[day]).join("")}</small>
+              </div>
+              <div class="actions">
+                <button type="button" class="secondary" data-edit="${habit.id}">編集</button>
+                <button type="button" class="${frozen ? "ghost" : "secondary"}" data-freeze="${habit.id}">${frozen ? "フリーズ中" : `フリーズ${freezeLeft}`}</button>
+              </div>
+            </div>
+            <div class="metric-grid">
+              <div class="metric"><b>${streak}</b><span>連続日数</span></div>
+              <div class="metric"><b>${habit.days.length}</b><span>週の目標</span></div>
+              <div class="metric"><b>${done ? "完了" : frozen ? "保護" : "未"}</b><span>今日</span></div>
+            </div>
+            <div class="week">${renderWeek(habit)}</div>
+            ${habit.note ? `<p class="muted">${escapeHtml(habit.note)}</p>` : ""}
+          </article>
+        `;
+      }).join("");
+
+      document.querySelectorAll("[data-toggle]").forEach((button) => {
+        button.addEventListener("click", () => toggleHabit(button.dataset.toggle));
+      });
+      document.querySelectorAll("[data-edit]").forEach((button) => {
+        button.addEventListener("click", () => openHabitDialog(button.dataset.edit));
+      });
+      document.querySelectorAll("[data-freeze]").forEach((button) => {
+        button.addEventListener("click", () => toggleFreeze(button.dataset.freeze));
+      });
+    }
+
+    function renderSummary() {
+      const today = completionFor(new Date());
+      const percent = today.total ? Math.round(today.ratio * 100) : 0;
+      const xp = weeklyXp();
+      const rank = rankForXp(xp);
+      els.scoreRing.style.setProperty("--value", `${percent * 3.6}deg`);
+      els.scoreText.textContent = `${percent}%`;
+      els.doneCount.textContent = today.done;
+      els.activeCount.textContent = state.habits.length;
+      els.bestStreak.textContent = Math.max(0, ...state.habits.map(streakForHabit));
+      els.totalStreak.textContent = totalProtectedStreak();
+      els.freezeLeft.textContent = Math.min(2, ...state.habits.map((habit) => freezeAllowance(habit.id)).concat([2]));
+      els.rankLabel.textContent = rank.name;
+      els.xpLabel.textContent = `${xp} XP`;
+      els.levelProgress.style.setProperty("--xp", `${rank.progress}%`);
+      els.dateLabel.textContent = new Intl.DateTimeFormat("ja-JP", { dateStyle: "full" }).format(new Date());
+
+      if (!today.total) {
+        els.todayMessage.textContent = "今日は自由日です";
+        els.subMessage.textContent = "休み曜日はストリークを傷つけません。休みも継続の一部です。";
+        els.praiseLine.textContent = "今日は休んで大丈夫。明日の自分に余白を渡せています。";
+      } else if (today.done === today.total) {
+        els.todayMessage.textContent = "今日の習慣は完了です";
+        els.subMessage.textContent = "完璧より継続。今日の自分はちゃんと積み上げました。";
+        els.praiseLine.textContent = praiseFor(today.done, totalProtectedStreak(), xp);
+      } else {
+        const protectedLeft = today.total - today.protected;
+        els.todayMessage.textContent = protectedLeft ? `あと${protectedLeft}個で今日の流れを守れます` : "今日はフリーズで守れています";
+        els.subMessage.textContent = "やるならチェック、休むならフリーズ。途切れた感じにしない設計です。";
+        els.praiseLine.textContent = today.protected ? "ゼロではありません。続いている線は、今日もちゃんと残っています。" : "まず1つだけ押せば流れが変わります。小さく始めましょう。";
+      }
+    }
+
+    function weekStart(date = new Date()) {
+      const start = new Date(date);
+      start.setDate(date.getDate() - date.getDay());
+      start.setHours(0, 0, 0, 0);
+      return start;
+    }
+
+    function weeklyXp() {
+      const start = weekStart();
+      let xp = 0;
+      for (let i = 0; i < 7; i += 1) {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+        const key = isoDate(date);
+        xp += (state.completions[key] || []).length * 10;
+        xp += (state.freezes[key] || []).length * 3;
+      }
+      return xp;
+    }
+
+    function habitWeeklyScore(habit) {
+      const start = weekStart();
+      let score = 0;
+      for (let i = 0; i < 7; i += 1) {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+        const key = isoDate(date);
+        if (isDone(habit.id, key)) score += 10;
+        else if (isFrozen(habit.id, key)) score += 3;
+      }
+      return score;
+    }
+
+    function rankForXp(xp) {
+      const ranks = [
+        { name: "Blue", min: 0, next: 50 },
+        { name: "Sky", min: 50, next: 110 },
+        { name: "Royal", min: 110, next: 190 },
+        { name: "Diamond", min: 190, next: 300 }
+      ];
+      let current = ranks[0];
+      ranks.forEach((rank) => {
+        if (xp >= rank.min) current = rank;
+      });
+      const range = current.next - current.min;
+      return { ...current, progress: Math.min(100, Math.round(((xp - current.min) / range) * 100)) };
+    }
+
+    function praiseFor(done, streak, xp) {
+      if (streak >= 30) return "30日ラインを越えています。これはもう気分ではなく、あなたの仕組みです。";
+      if (streak >= 7) return "1週間以上つながっています。続いている自分をちゃんと見てあげましょう。";
+      if (xp >= 50) return "今週の積み上げが見えています。リーグを上げる楽しさが出てきました。";
+      if (done >= 2) return "今日の自分に、ちゃんと約束を返せています。いい流れです。";
+      return "小さくても完了。続く人は、この小ささを大事にします。";
+    }
+
+    function celebrate(habitId) {
+      const habit = state.habits.find((item) => item.id === habitId);
+      if (!habit) return;
+      const streak = streakForHabit(habit);
+      const lines = [
+        `${habit.name}、完了。今日の一票が入りました。`,
+        `${streak}日ラインです。静かに強いです。`,
+        "押せました。今のタップは未来の自分に効きます。"
+      ];
+      showToast(lines[Math.min(lines.length - 1, streak % lines.length)]);
+    }
+
+    function renderLeaderboard() {
+      const ranked = [...state.habits]
+        .map((habit) => ({ habit, score: habitWeeklyScore(habit), streak: streakForHabit(habit) }))
+        .sort((a, b) => b.score - a.score || b.streak - a.streak)
+        .slice(0, 5);
+
+      if (!ranked.length) {
+        els.leaderboard.innerHTML = `<div class="empty"><p>習慣を追加すると、今週のランキングが出ます。</p></div>`;
+        return;
+      }
+
+      els.leaderboard.innerHTML = ranked.map((item, index) => `
+        <div class="rank-row">
+          <div class="rank-badge">${index + 1}</div>
+          <div>
+            <strong>${escapeHtml(item.habit.name)}</strong>
+            <p class="muted">${item.streak}日継続 ・ ${escapeHtml(item.habit.category)}</p>
+          </div>
+          <div class="rank-score">${item.score} XP</div>
+        </div>
+      `).join("");
+    }
+
+    function renderCalendar() {
+      const today = new Date();
+      const start = new Date(today);
+      start.setDate(today.getDate() - 29);
+      els.calendarGrid.innerHTML = Array.from({ length: 30 }, (_, index) => {
+        const date = new Date(start);
+        date.setDate(start.getDate() + index);
+        const info = completionFor(date);
+        const cls = info.total && info.protected === info.total ? "full" : info.frozen ? "frozen" : info.done ? "partial" : "";
+        const todayCls = isoDate(date) === isoDate() ? "today" : "";
+        return `<div class="${cls} ${todayCls}" title="${isoDate(date)}">${date.getDate()}</div>`;
+      }).join("");
+    }
+
+    function renderTemplates() {
+      els.quickGrid.innerHTML = templates.map((template, index) => `
+        <button type="button" class="quick" data-template="${index}">
+          ${escapeHtml(template.name)}
+          <span>${escapeHtml(template.category)} ・ ${template.time}</span>
+        </button>
+      `).join("");
+      document.querySelectorAll("[data-template]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const item = templates[Number(button.dataset.template)];
+          state.habits.push({ ...item, id: crypto.randomUUID(), createdAt: new Date().toISOString() });
+          saveState();
+          render();
+          showToast("テンプレートを追加しました");
+        });
+      });
+    }
+
+    function renderWeekdayPicker(selected = [0,1,2,3,4,5,6]) {
+      els.weekdayPicker.innerHTML = weekdays.map((day, index) => `
+        <label>
+          <input type="checkbox" value="${index}" ${selected.includes(index) ? "checked" : ""}>
+          <span>${day}</span>
+        </label>
+      `).join("");
+    }
+
+    function openHabitDialog(id = "") {
+      const habit = state.habits.find((item) => item.id === id);
+      els.dialogMode.textContent = habit ? "習慣を編集" : "新しい習慣";
+      els.habitId.value = habit?.id || "";
+      els.habitName.value = habit?.name || "";
+      els.habitCategory.value = habit?.category || "健康";
+      els.habitTime.value = habit?.time || "";
+      els.habitNote.value = habit?.note || "";
+      els.deleteHabitBtn.hidden = !habit;
+      renderWeekdayPicker(habit?.days || [0,1,2,3,4,5,6]);
+      els.dialog.showModal();
+      els.habitName.focus();
+    }
+
+    function closeHabitDialog() {
+      els.dialog.close();
+      els.form.reset();
+    }
+
+    function saveHabit(event) {
+      event.preventDefault();
+      const days = [...els.weekdayPicker.querySelectorAll("input:checked")].map((input) => Number(input.value));
+      if (!days.length) {
+        showToast("目標曜日を1つ以上選んでください");
+        return;
+      }
+
+      const payload = {
+        id: els.habitId.value || crypto.randomUUID(),
+        name: els.habitName.value.trim(),
+        category: els.habitCategory.value,
+        time: els.habitTime.value,
+        note: els.habitNote.value.trim(),
+        days,
+        createdAt: new Date().toISOString()
+      };
+
+      const index = state.habits.findIndex((habit) => habit.id === payload.id);
+      if (index >= 0) state.habits[index] = { ...state.habits[index], ...payload };
+      else state.habits.push(payload);
+
+      saveState();
+      closeHabitDialog();
+      render();
+      showToast("保存しました");
+    }
+
+    function deleteHabit() {
+      const id = els.habitId.value;
+      state.habits = state.habits.filter((habit) => habit.id !== id);
+      Object.keys(state.completions).forEach((key) => {
+        state.completions[key] = state.completions[key].filter((habitId) => habitId !== id);
+      });
+      Object.keys(state.freezes).forEach((key) => {
+        state.freezes[key] = state.freezes[key].filter((habitId) => habitId !== id);
+      });
+      saveState();
+      closeHabitDialog();
+      render();
+      showToast("削除しました");
+    }
+
+    function exportData() {
+      const backup = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+      navigator.clipboard?.writeText(backup).then(
+        () => showToast("バックアップをコピーしました"),
+        () => {
+          els.restoreInput.value = backup;
+          showToast("下の欄にバックアップを表示しました");
+        }
+      );
+    }
+
+    function restoreData() {
+      try {
+        const text = decodeURIComponent(escape(atob(els.restoreInput.value.trim())));
+        const restored = JSON.parse(text);
+        if (!Array.isArray(restored.habits) || !restored.completions) throw new Error("invalid");
+        state = { ...restored, freezes: restored.freezes || {} };
+        saveState();
+        render();
+        showToast("復元しました");
+      } catch (error) {
+        showToast("復元できませんでした");
+      }
+    }
+
+    function resetToday() {
+      state.completions[isoDate()] = [];
+      state.freezes[isoDate()] = [];
+      saveState();
+      render();
+      showToast("今日のチェックをリセットしました");
+    }
+
+    function setActiveTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll("[data-tab]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.tab === tab);
+      });
+      document.querySelectorAll("[data-view]").forEach((panel) => {
+        panel.classList.toggle("active", panel.dataset.view === tab || (tab === "today" && panel.dataset.view === "stats"));
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      })[char]);
+    }
+
+    function showToast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => els.toast.classList.remove("show"), 2200);
+    }
+
+    function render() {
+      renderSummary();
+      renderHabits();
+      renderLeaderboard();
+      renderCalendar();
+      renderTemplates();
+      setActiveTab(activeTab);
+    }
+
+    document.querySelector("#addHabitBtn").addEventListener("click", () => openHabitDialog());
+    document.querySelector("#closeDialogBtn").addEventListener("click", closeHabitDialog);
+    document.querySelector("#cancelDialogBtn").addEventListener("click", closeHabitDialog);
+    document.querySelector("#resetTodayBtn").addEventListener("click", resetToday);
+    document.querySelector("#exportBtn").addEventListener("click", exportData);
+    document.querySelector("#copyBackupBtn").addEventListener("click", exportData);
+    document.querySelector("#restoreBtn").addEventListener("click", restoreData);
+    els.form.addEventListener("submit", saveHabit);
+    els.deleteHabitBtn.addEventListener("click", deleteHabit);
+    document.querySelectorAll("[data-tab]").forEach((button) => {
+      button.addEventListener("click", () => setActiveTab(button.dataset.tab));
+    });
+
+    render();
+  </script>
+</body>
+</html>
