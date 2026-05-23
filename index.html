@@ -523,6 +523,12 @@
       background: linear-gradient(180deg, #fff, #f4f9ff);
     }
 
+    .habit.is-frozen {
+      border-color: #9eb9dc;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.97), rgba(226, 240, 255, .78));
+    }
+
     .focus-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -537,6 +543,18 @@
 
     .primary-check.done {
       background: var(--mint-dark);
+    }
+
+    .freeze-button {
+      min-height: 56px;
+      background: #dbeafe;
+      color: #17477e;
+      border: 1px solid #a7c0df;
+    }
+
+    .freeze-button.active {
+      background: #17477e;
+      color: #fff;
     }
 
     .bonus-button {
@@ -563,6 +581,307 @@
     .monster-panel {
       background: linear-gradient(135deg, #fff8e4, #f4f9ff);
       border-color: #ead28e;
+    }
+
+    .monster-teaser {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .mini-monster,
+    .battle-monster {
+      position: relative;
+      display: grid;
+      place-items: center;
+      filter: drop-shadow(0 18px 24px rgba(34, 37, 43, .2));
+    }
+
+    .mini-monster {
+      width: 76px;
+      aspect-ratio: 1;
+    }
+
+    .battle-monster {
+      width: min(250px, 66vw);
+      aspect-ratio: 1;
+      margin: 8px auto 0;
+      animation: monsterBreathe 1.8s ease-in-out infinite;
+    }
+
+    .monster-body {
+      position: absolute;
+      inset: 18%;
+      border-radius: 42% 48% 46% 40%;
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255,255,255,.52), transparent 22%),
+        linear-gradient(145deg, #273159, #6246d9 58%, #17213f);
+      border: 3px solid #15192e;
+    }
+
+    .monster-horn {
+      position: absolute;
+      top: 9%;
+      width: 20%;
+      height: 24%;
+      border-radius: 100% 0 100% 0;
+      background: linear-gradient(135deg, #fff4c7, #c58b2d);
+      border: 2px solid #4d3410;
+      transform: rotate(-24deg);
+    }
+
+    .monster-horn.right {
+      transform: rotate(114deg);
+      right: 22%;
+    }
+
+    .monster-horn.left { left: 22%; }
+
+    .monster-wing {
+      position: absolute;
+      top: 35%;
+      width: 30%;
+      height: 27%;
+      border-radius: 70% 10% 70% 20%;
+      background: linear-gradient(135deg, #2fd5ff, #285aa4);
+      border: 3px solid #162442;
+    }
+
+    .monster-wing.left {
+      left: 4%;
+      transform: rotate(-22deg);
+    }
+
+    .monster-wing.right {
+      right: 4%;
+      transform: scaleX(-1) rotate(-22deg);
+    }
+
+    .monster-eye {
+      position: absolute;
+      top: 43%;
+      width: 9%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: inset 0 0 0 3px #1a1f33;
+      z-index: 2;
+    }
+
+    .monster-eye::after {
+      content: "";
+      position: absolute;
+      inset: 32%;
+      border-radius: 50%;
+      background: #f5365c;
+    }
+
+    .monster-eye.left { left: 41%; }
+    .monster-eye.right { right: 34%; }
+
+    .monster-mouth {
+      position: absolute;
+      top: 57%;
+      left: 42%;
+      width: 22%;
+      height: 9%;
+      border-radius: 0 0 999px 999px;
+      background: #161a2d;
+      z-index: 2;
+    }
+
+    .monster-mouth::before,
+    .monster-mouth::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      width: 18%;
+      height: 95%;
+      background: #fff;
+      clip-path: polygon(0 0, 100% 0, 50% 100%);
+    }
+
+    .monster-mouth::before { left: 18%; }
+    .monster-mouth::after { right: 18%; }
+
+    @keyframes monsterBreathe {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-8px) scale(1.03); }
+    }
+
+    .moment {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      pointer-events: none;
+      background: rgba(238, 246, 255, .18);
+      opacity: 0;
+      transform: scale(.98);
+      transition: opacity .22s ease, transform .22s ease;
+    }
+
+    .moment.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .moment-card {
+      width: min(420px, calc(100vw - 36px));
+      display: grid;
+      gap: 10px;
+      justify-items: center;
+      padding: 22px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.94);
+      border: 1px solid #b9d4f4;
+      box-shadow: 0 24px 70px rgba(17, 103, 216, .24);
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .moment-mark {
+      width: 74px;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--mint);
+      color: #fff;
+      font-size: 34px;
+      font-weight: 950;
+      box-shadow: 0 0 0 10px rgba(19, 118, 232, .12);
+      animation: momentMark .7s cubic-bezier(.2, .9, .2, 1.2);
+    }
+
+    .moment.freeze .moment-mark {
+      background: #17477e;
+      box-shadow: 0 0 0 10px rgba(23, 71, 126, .13);
+    }
+
+    .moment-line {
+      width: 72%;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, var(--mint), transparent);
+      animation: momentLine .9s ease;
+    }
+
+    .moment h2 {
+      font-size: 24px;
+    }
+
+    @keyframes momentMark {
+      0% { transform: scale(.78) rotate(-8deg); opacity: .2; }
+      60% { transform: scale(1.08) rotate(3deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0); }
+    }
+
+    @keyframes momentLine {
+      0% { transform: scaleX(0); opacity: 0; }
+      100% { transform: scaleX(1); opacity: 1; }
+    }
+
+    .battle-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      place-items: center;
+      padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
+      background:
+        radial-gradient(circle at 50% 28%, rgba(255, 240, 202, .34), transparent 18rem),
+        rgba(9, 16, 31, .72);
+      backdrop-filter: blur(12px);
+    }
+
+    .battle-overlay.show {
+      display: grid;
+    }
+
+    .battle-card {
+      width: min(520px, 100%);
+      max-height: calc(100dvh - 36px);
+      overflow-y: auto;
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #fff, #f4f9ff);
+      border: 1px solid #d8c17e;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, .32);
+      text-align: center;
+    }
+
+    .battle-title {
+      display: grid;
+      gap: 4px;
+    }
+
+    .battle-title h2 {
+      font-size: 24px;
+    }
+
+    .battle-hp {
+      height: 12px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e8ecf2;
+      border: 1px solid #ccd6e3;
+    }
+
+    .battle-hp span {
+      display: block;
+      width: var(--hp, 100%);
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #f43f5e, #f59e0b);
+      transition: width .18s ease;
+    }
+
+    .battle-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .attack-button {
+      min-height: 60px;
+      background: #1f2a44;
+      box-shadow: 0 12px 26px rgba(31, 42, 68, .24);
+    }
+
+    .slash {
+      position: absolute;
+      inset: 14%;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .slash.hit {
+      animation: slashHit .26s ease;
+    }
+
+    .slash::before {
+      content: "";
+      position: absolute;
+      left: 18%;
+      top: 44%;
+      width: 68%;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, #fff, #60a5fa, transparent);
+      transform: rotate(-28deg);
+      box-shadow: 0 0 18px rgba(96, 165, 250, .9);
+    }
+
+    @keyframes slashHit {
+      0% { opacity: 0; transform: translate(-18px, 16px) scale(.8); }
+      45% { opacity: 1; transform: translate(0, 0) scale(1.06); }
+      100% { opacity: 0; transform: translate(18px, -16px) scale(1); }
     }
 
     .other-habits {
@@ -935,7 +1254,8 @@
       }
 
       .focus-actions,
-      .xp-row {
+      .xp-row,
+      .battle-actions {
         grid-template-columns: 1fr;
       }
 
@@ -1095,6 +1415,8 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="moment" id="moment" aria-live="polite"></div>
+  <div class="battle-overlay" id="battleOverlay" role="dialog" aria-modal="true" aria-labelledby="battleTitle"></div>
 
   <script>
     const STORAGE_KEY = "habit-dock-v1";
@@ -1107,13 +1429,15 @@
       { name: "今日のひとことメモ", category: "心のケア", time: "22:00", note: "よかったことを一行。", days: [0,1,2,3,4,5,6] }
     ];
     const monsters = [
-      { id: "weak", name: "弱モンスター", threshold: 10, rank: "Rank 1" },
-      { id: "mid", name: "中ボス", threshold: 50, rank: "Rank 2" },
-      { id: "boss", name: "大ボス", threshold: 100, rank: "Rank 3" }
+      { id: "weak", name: "ルミナスバット", threshold: 10, rank: "Rank 1", taps: 10 },
+      { id: "mid", name: "ミラージュナイト", threshold: 50, rank: "Rank 2", taps: 16 },
+      { id: "boss", name: "星喰いドラグーン", threshold: 100, rank: "Rank 3", taps: 24 }
     ];
 
     let state = loadState();
     let activeHabitId = null;
+    let activeBattle = null;
+    const seenMonsterPrompts = new Set();
 
     const els = {
       dateLabel: document.querySelector("#dateLabel"),
@@ -1128,6 +1452,8 @@
       calendarGrid: document.querySelector("#calendarGrid"),
       quickGrid: document.querySelector("#quickGrid"),
       toast: document.querySelector("#toast"),
+      moment: document.querySelector("#moment"),
+      battleOverlay: document.querySelector("#battleOverlay"),
       dialog: document.querySelector("#habitDialog"),
       form: document.querySelector("#habitForm"),
       habitId: document.querySelector("#habitId"),
@@ -1278,7 +1604,13 @@
       state.freezes[key] = [...frozen];
       saveState();
       render();
-      showToast(frozen.has(habitId) ? "今日はフリーズで守りました" : "フリーズを戻しました");
+      if (frozen.has(habitId)) {
+        const left = freezeAllowance(habitId);
+        showMoment("freeze", "フリーズしました", `継続は維持されています。残り${left}回`);
+        showToast("フリーズしました。継続は維持されています");
+      } else {
+        showToast("フリーズを戻しました");
+      }
     }
 
     function completionFor(date) {
@@ -1419,9 +1751,112 @@
       if (!state.monsters) state.monsters = {};
       if (!state.monsters[habitId]) state.monsters[habitId] = {};
       state.monsters[habitId][monsterId] = true;
+      activeBattle = null;
+      els.battleOverlay.classList.remove("show");
+      els.battleOverlay.innerHTML = "";
       saveState();
       render();
+      showMoment("done", "討伐完了", "ランクアップしました");
       showToast("倒しました。ランクアップです");
+    }
+
+    function monsterMarkup(size = "mini") {
+      return `
+        <div class="${size === "battle" ? "battle-monster" : "mini-monster"}" aria-hidden="true">
+          <div class="monster-wing left"></div>
+          <div class="monster-wing right"></div>
+          <div class="monster-horn left"></div>
+          <div class="monster-horn right"></div>
+          <div class="monster-body"></div>
+          <div class="monster-eye left"></div>
+          <div class="monster-eye right"></div>
+          <div class="monster-mouth"></div>
+          ${size === "battle" ? `<div class="slash" id="slashEffect"></div>` : ""}
+        </div>
+      `;
+    }
+
+    function showMoment(type, title, message) {
+      els.moment.className = `moment ${type}`;
+      els.moment.innerHTML = `
+        <div class="moment-card">
+          <div class="moment-mark">${type === "freeze" ? "氷" : "✓"}</div>
+          <div class="moment-line"></div>
+          <h2>${escapeHtml(title)}</h2>
+          <p class="muted">${escapeHtml(message)}</p>
+        </div>
+      `;
+      requestAnimationFrame(() => els.moment.classList.add("show"));
+      clearTimeout(showMoment.timer);
+      showMoment.timer = setTimeout(() => {
+        els.moment.classList.remove("show");
+      }, 1850);
+    }
+
+    function openMonsterBattle(habitId, monsterId) {
+      const habit = state.habits.find((item) => item.id === habitId);
+      const monster = monsters.find((item) => item.id === monsterId);
+      if (!habit || !monster) return;
+      activeBattle = { habitId, monsterId, hits: 0 };
+      renderBattle();
+    }
+
+    function closeMonsterBattle() {
+      activeBattle = null;
+      els.battleOverlay.classList.remove("show");
+      els.battleOverlay.innerHTML = "";
+    }
+
+    function attackMonster() {
+      if (!activeBattle) return;
+      const monster = monsters.find((item) => item.id === activeBattle.monsterId);
+      if (!monster) return;
+      activeBattle.hits += 1;
+      renderBattle(true);
+      if (activeBattle.hits >= monster.taps) {
+        setTimeout(() => defeatMonster(activeBattle.habitId, activeBattle.monsterId), 220);
+      }
+    }
+
+    function renderBattle(hit = false) {
+      if (!activeBattle) return;
+      const habit = state.habits.find((item) => item.id === activeBattle.habitId);
+      const monster = monsters.find((item) => item.id === activeBattle.monsterId);
+      if (!habit || !monster) return;
+      const remaining = Math.max(0, monster.taps - activeBattle.hits);
+      const hp = Math.max(0, Math.round((remaining / monster.taps) * 100));
+      els.battleOverlay.innerHTML = `
+        <div class="battle-card">
+          <div class="battle-title">
+            <p class="eyebrow">${monster.threshold}XP 到達</p>
+            <h2 id="battleTitle">${monster.name}が現れた</h2>
+            <p class="muted">${escapeHtml(habit.name)}の力で討伐しましょう。${monster.taps}回タップ！</p>
+          </div>
+          ${monsterMarkup("battle")}
+          <div class="battle-hp" aria-label="モンスターの残り体力"><span style="--hp: ${hp}%"></span></div>
+          <p class="muted">あと${remaining}回タップで討伐</p>
+          <div class="battle-actions">
+            <button type="button" class="attack-button" id="attackMonsterBtn">タップしろ！！</button>
+            <button type="button" class="secondary" id="closeBattleBtn">あとで</button>
+          </div>
+        </div>
+      `;
+      els.battleOverlay.classList.add("show");
+      document.querySelector("#attackMonsterBtn").addEventListener("click", attackMonster);
+      document.querySelector("#closeBattleBtn").addEventListener("click", closeMonsterBattle);
+      document.querySelector(".battle-monster").addEventListener("click", attackMonster);
+      if (hit) {
+        const slash = document.querySelector("#slashEffect");
+        slash?.classList.add("hit");
+      }
+    }
+
+    function offerMonsterBattle(habit, monster) {
+      if (!habit || !monster || activeBattle) return;
+      const key = `${habit.id}:${monster.id}`;
+      if (seenMonsterPrompts.has(key)) return;
+      seenMonsterPrompts.add(key);
+      setTimeout(() => openMonsterBattle(habit.id, monster.id), 380);
     }
 
     function habitMonthStats(habit) {
@@ -1495,7 +1930,7 @@
       const otherToday = todayHabits.filter((item) => item.id !== habit.id);
 
       els.habitList.innerHTML = `
-        <article class="habit ${done ? "is-done" : ""} ${month.graduated ? "graduated" : ""}" id="habit-${habit.id}">
+        <article class="habit ${done ? "is-done" : ""} ${frozen ? "is-frozen" : ""} ${month.graduated ? "graduated" : ""}" id="habit-${habit.id}">
           <div class="habit-top">
             <button type="button" class="check-button ${done ? "done pop" : ""}" aria-label="${habit.name}を${done ? "未完了" : "完了"}にする" data-toggle="${habit.id}">${done ? "✓" : ""}</button>
             <div class="habit-title">
@@ -1518,7 +1953,7 @@
               もう1回やってみる？ 次は${attempts + 1}XP
             </button>
           ` : `
-            <button type="button" class="${frozen ? "ghost" : "secondary"}" data-freeze="${habit.id}">
+            <button type="button" class="freeze-button ${frozen ? "active" : ""}" data-freeze="${habit.id}">
               ${frozen ? "フリーズを戻す" : `今日は休む（残り${freezeLeft}）`}
             </button>
           `}
@@ -1541,11 +1976,15 @@
 
           ${monster ? `
             <div class="monster-panel">
-              <div>
-                <p class="eyebrow">${monster.threshold}XP 到達</p>
-                <h3>${monster.name}が登場</h3>
+              <div class="monster-teaser">
+                ${monsterMarkup()}
+                <div>
+                  <p class="eyebrow">${monster.threshold}XP 到達</p>
+                  <h3>${monster.name}が現れた</h3>
+                  <p class="muted">${monster.taps}回タップで討伐できます。</p>
+                </div>
               </div>
-              <button type="button" data-defeat="${habit.id}:${monster.id}">倒してランクアップ</button>
+              <button type="button" data-battle="${habit.id}:${monster.id}">討伐に向かう</button>
             </div>
           ` : ""}
 
@@ -1587,12 +2026,13 @@
           render();
         });
       });
-      document.querySelectorAll("[data-defeat]").forEach((button) => {
+      document.querySelectorAll("[data-battle]").forEach((button) => {
         button.addEventListener("click", () => {
-          const [habitId, monsterId] = button.dataset.defeat.split(":");
-          defeatMonster(habitId, monsterId);
+          const [habitId, monsterId] = button.dataset.battle.split(":");
+          openMonsterBattle(habitId, monsterId);
         });
       });
+      offerMonsterBattle(habit, monster);
     }
 
     function renderSummary() {
@@ -1678,6 +2118,7 @@
       const habit = state.habits.find((item) => item.id === habitId);
       if (!habit) return;
       const streak = streakForHabit(habit);
+      if (attempt === 1) showMoment("done", `${streak}日継続中`, "今日も流れを守りました");
       const lines = [
         `${habit.name}、完了。今日の一票が入りました。`,
         `${attempt}回目。+${attempt}XPです。積み上がっています。`,
