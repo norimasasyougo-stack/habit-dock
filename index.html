@@ -562,6 +562,12 @@
       background: #143f7b;
     }
 
+    .undo-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
     .xp-panel,
     .monster-panel {
       display: grid;
@@ -1255,6 +1261,7 @@
 
       .focus-actions,
       .xp-row,
+      .undo-row,
       .battle-actions {
         grid-template-columns: 1fr;
       }
@@ -1638,6 +1645,32 @@
       saveState();
       render();
       celebrate(habitId, nextCount);
+    }
+
+    function undoEffort(habitId) {
+      const key = isoDate();
+      const current = effortCount(habitId, key);
+      if (current <= 0 && !isDone(habitId, key)) {
+        showToast("今日の記録はまだありません");
+        return;
+      }
+
+      const set = doneSet(key);
+      if (current > 1) {
+        setEffort(habitId, current - 1, key);
+        state.completions[key] = [...set];
+        saveState();
+        render();
+        showToast(`今日の回数を${current - 1}回に戻しました`);
+        return;
+      }
+
+      set.delete(habitId);
+      state.completions[key] = [...set];
+      setEffort(habitId, 0, key);
+      saveState();
+      render();
+      showToast("今日の完了を取り消しました");
     }
 
     function toggleHabit(habitId) {
@@ -2064,6 +2097,10 @@
             <button type="button" class="bonus-button" data-effort="${habit.id}">
               もう1回やってみる？ 次は${attempts + 1}XP
             </button>
+            <div class="undo-row">
+              <button type="button" class="secondary" data-undo-effort="${habit.id}">1回分戻す</button>
+              <button type="button" class="ghost" data-toggle="${habit.id}">今日の完了を取り消す</button>
+            </div>
           ` : `
             <button type="button" class="freeze-button ${frozen ? "active" : ""}" data-freeze="${habit.id}">
               ${frozen ? "フリーズを戻す" : `今日は休む（残り${freezeLeft}）`}
@@ -2122,6 +2159,9 @@
       });
       document.querySelectorAll("[data-effort]").forEach((button) => {
         button.addEventListener("click", () => addEffort(button.dataset.effort));
+      });
+      document.querySelectorAll("[data-undo-effort]").forEach((button) => {
+        button.addEventListener("click", () => undoEffort(button.dataset.undoEffort));
       });
       document.querySelectorAll("[data-edit]").forEach((button) => {
         button.addEventListener("click", () => openHabitDialog(button.dataset.edit));
