@@ -1350,6 +1350,7 @@
           </div>
           <div class="stack">
             <button type="button" class="ghost" id="copyBackupBtn">バックアップをコピー</button>
+            <p class="muted" id="backupStatus">データはこの端末に保存され、自動バックアップも作られます。</p>
             <label>
               バックアップを復元
               <textarea id="restoreInput" placeholder="コピーしたバックアップ文字列を貼り付け"></textarea>
@@ -1420,6 +1421,8 @@
 
   <script>
     const STORAGE_KEY = "habit-dock-v1";
+    const STORAGE_BACKUP_KEY = "habit-dock-v1-auto-backup";
+    const STORAGE_SNAPSHOTS_KEY = "habit-dock-v1-snapshots";
     const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
     const templates = [
       { name: "英語スピーキング", category: "学習", time: "20:00", note: "1レッスンだけ。日曜は休みでOK。", days: [1,2,3,4,5,6] },
@@ -1464,7 +1467,8 @@
       weekdayPicker: document.querySelector("#weekdayPicker"),
       deleteHabitBtn: document.querySelector("#deleteHabitBtn"),
       dialogMode: document.querySelector("#dialogMode"),
-      restoreInput: document.querySelector("#restoreInput")
+      restoreInput: document.querySelector("#restoreInput"),
+      backupStatus: document.querySelector("#backupStatus")
     };
 
     function isoDate(date = new Date()) {
@@ -1474,8 +1478,8 @@
       return `${y}-${m}-${d}`;
     }
 
-    function loadState() {
-      const fallback = {
+    function fallbackState() {
+      return {
         habits: [
           {
             id: crypto.randomUUID(),
@@ -1501,20 +1505,88 @@
         efforts: {},
         monsters: {}
       };
+    }
+
+    function normalizeState(value) {
+      if (!value || !Array.isArray(value.habits) || !value.completions || typeof value.completions !== "object") {
+        return null;
+      }
+      return {
+        habits: value.habits,
+        completions: value.completions || {},
+        freezes: value.freezes || {},
+        efforts: value.efforts || {},
+        monsters: value.monsters || {}
+      };
+    }
+
+    function parseStoredState(key) {
+      try {
+        return normalizeState(JSON.parse(localStorage.getItem(key)));
+      } catch (error) {
+        console.warn(`Could not read ${key}`, error);
+        return null;
+      }
+    }
+
+    function writeStorage(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+        return true;
+      } catch (error) {
+        console.warn(`Could not write ${key}`, error);
+        return false;
+      }
+    }
+
+    function rememberSnapshot(value) {
+      try {
+        const snapshots = JSON.parse(localStorage.getItem(STORAGE_SNAPSHOTS_KEY) || "[]");
+        snapshots.unshift({ savedAt: new Date().toISOString(), data: value });
+        localStorage.setItem(STORAGE_SNAPSHOTS_KEY, JSON.stringify(snapshots.slice(0, 5)));
+      } catch (error) {
+        console.warn("Could not write snapshots", error);
+      }
+    }
+
+    function loadState() {
+      const saved = parseStoredState(STORAGE_KEY);
+      if (saved) {
+        writeStorage(STORAGE_BACKUP_KEY, saved);
+        return saved;
+      }
+
+      const backup = parseStoredState(STORAGE_BACKUP_KEY);
+      if (backup) {
+        writeStorage(STORAGE_KEY, backup);
+        setTimeout(() => showToast("自動バックアップから復旧しました"), 300);
+        return backup;
+      }
 
       try {
-        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        if (saved && Array.isArray(saved.habits) && saved.completions) {
-          return { ...saved, freezes: saved.freezes || {}, efforts: saved.efforts || {}, monsters: saved.monsters || {} };
+        const snapshots = JSON.parse(localStorage.getItem(STORAGE_SNAPSHOTS_KEY) || "[]");
+        const snapshot = snapshots.map((item) => normalizeState(item.data)).find(Boolean);
+        if (snapshot) {
+          writeStorage(STORAGE_KEY, snapshot);
+          writeStorage(STORAGE_BACKUP_KEY, snapshot);
+          setTimeout(() => showToast("保存履歴から復旧しました"), 300);
+          return snapshot;
         }
       } catch (error) {
         console.warn(error);
       }
-      return fallback;
+
+      return fallbackState();
     }
 
     function saveState() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const normalized = normalizeState(state);
+      if (!normalized) return;
+      const previous = parseStoredState(STORAGE_KEY);
+      if (previous) writeStorage(STORAGE_BACKUP_KEY, previous);
+      writeStorage(STORAGE_KEY, normalized);
+      writeStorage(STORAGE_BACKUP_KEY, normalized);
+      rememberSnapshot(normalized);
     }
 
     function habitsFor(date) {
@@ -2162,6 +2234,16 @@
       });
     }
 
+    function renderBackupStatus() {
+      if (!els.backupStatus) return;
+      const backup = parseStoredState(STORAGE_BACKUP_KEY);
+      const habitCount = state.habits.length;
+      const recordCount = Object.keys(state.completions || {}).length + Object.keys(state.freezes || {}).length;
+      els.backupStatus.textContent = backup
+        ? `自動バックアップ済み。習慣${habitCount}件、記録${recordCount}日分をこの端末に保護しています。`
+        : `習慣${habitCount}件をこの端末に保存中。次の操作で自動バックアップも作られます。`;
+    }
+
     function renderWeekdayPicker(selected = [0,1,2,3,4,5,6]) {
       els.weekdayPicker.innerHTML = weekdays.map((day, index) => `
         <label>
@@ -2248,7 +2330,7 @@
     }
 
     function exportData() {
-      const backup = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+      const backup = btoa(unescape(encodeURIComponent(JSON.stringify(normalizeState(state)))));
       navigator.clipboard?.writeText(backup).then(
         () => showToast("バックアップをコピーしました"),
         () => {
@@ -2262,8 +2344,9 @@
       try {
         const text = decodeURIComponent(escape(atob(els.restoreInput.value.trim())));
         const restored = JSON.parse(text);
-        if (!Array.isArray(restored.habits) || !restored.completions) throw new Error("invalid");
-        state = { ...restored, freezes: restored.freezes || {}, efforts: restored.efforts || {}, monsters: restored.monsters || {} };
+        const normalized = normalizeState(restored);
+        if (!normalized) throw new Error("invalid");
+        state = normalized;
         activeHabitId = null;
         saveState();
         render();
@@ -2328,6 +2411,7 @@
       renderHabits();
       renderCalendar();
       renderTemplates();
+      renderBackupStatus();
       renderHabitTabs();
     }
 
