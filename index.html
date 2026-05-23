@@ -6,6 +6,9 @@
   <meta name="theme-color" content="#eef6ff">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Habit Dock">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/habit-dock-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <title>Habit Dock</title>
   <style>
     :root {
@@ -776,6 +779,37 @@
       animation: momentLine .9s ease;
     }
 
+    .streak-dots {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 7px;
+      max-width: 250px;
+      margin-top: 2px;
+    }
+
+    .streak-dot {
+      width: 28px;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 1px solid #c3d2e5;
+      background: #f7fbff;
+      color: transparent;
+      font-size: 14px;
+      font-weight: 950;
+      animation: streakDot .42s ease forwards;
+      animation-delay: var(--delay, 0ms);
+    }
+
+    .streak-dot.checked {
+      background: #52647a;
+      border-color: #52647a;
+      color: #fff;
+      box-shadow: 0 6px 16px rgba(82, 100, 122, .18);
+    }
+
     .moment h2 {
       font-size: 24px;
     }
@@ -789,6 +823,12 @@
     @keyframes momentLine {
       0% { transform: scaleX(0); opacity: 0; }
       100% { transform: scaleX(1); opacity: 1; }
+    }
+
+    @keyframes streakDot {
+      0% { transform: scale(.72); opacity: .34; }
+      70% { transform: scale(1.12); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
     }
 
     .battle-overlay {
@@ -1926,6 +1966,7 @@
       els.moment.innerHTML = `
         <div class="moment-card">
           <div class="moment-mark">${type === "freeze" ? "氷" : "✓"}</div>
+          ${type === "done" ? streakDotsMarkup(showMoment.streak || 1) : ""}
           <div class="moment-line"></div>
           <h2>${escapeHtml(title)}</h2>
           <p class="muted">${escapeHtml(message)}</p>
@@ -1936,6 +1977,17 @@
       showMoment.timer = setTimeout(() => {
         els.moment.classList.remove("show");
       }, 1850);
+    }
+
+    function streakDotsMarkup(streak) {
+      const count = Math.max(1, Math.min(14, Number(streak) || 1));
+      return `
+        <div class="streak-dots" aria-label="${count}日継続">
+          ${Array.from({ length: count }, (_, index) => `
+            <span class="streak-dot checked" style="--delay: ${index * 92}ms">✓</span>
+          `).join("")}
+        </div>
+      `;
     }
 
     function openMonsterBattle(habitId, monsterId) {
@@ -2270,7 +2322,10 @@
       const habit = state.habits.find((item) => item.id === habitId);
       if (!habit) return;
       const streak = streakForHabit(habit);
-      if (attempt === 1) showMoment("done", `${streak}日継続中`, "今日も流れを守りました");
+      if (attempt === 1) {
+        showMoment.streak = streak;
+        showMoment("done", `${streak}日継続中`, "今日も流れを守りました");
+      }
       const lines = [
         `${habit.name}、完了。今日の一票が入りました。`,
         `${attempt}回目。+${attempt}XPです。積み上がっています。`,
