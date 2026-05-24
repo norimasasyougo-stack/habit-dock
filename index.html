@@ -353,6 +353,105 @@
       min-height: 58px;
     }
 
+    .transfer-card {
+      margin-top: 12px;
+      overflow: hidden;
+      border: 1px solid #bed3ef;
+      border-radius: 8px;
+      background: rgba(255,255,255,.82);
+      box-shadow: 0 10px 26px rgba(34, 37, 43, .06);
+    }
+
+    .transfer-card summary {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 62px;
+      padding: 12px;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .transfer-card summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .transfer-card summary::after {
+      content: "⌄";
+      display: grid;
+      place-items: center;
+      width: 34px;
+      aspect-ratio: 1;
+      border-radius: 8px;
+      background: #eef3f8;
+      color: var(--muted);
+      font-weight: 950;
+      transition: transform .18s ease;
+    }
+
+    .transfer-card[open] summary::after {
+      transform: rotate(180deg);
+    }
+
+    .transfer-card summary span {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .transfer-card summary b {
+      font-size: 15px;
+      line-height: 1.25;
+    }
+
+    .transfer-card summary small {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .transfer-body {
+      display: grid;
+      gap: 10px;
+      padding: 0 12px 12px;
+    }
+
+    .transfer-steps {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .transfer-steps div {
+      min-height: 74px;
+      display: grid;
+      align-content: center;
+      gap: 5px;
+      padding: 9px;
+      border: 1px solid #dce5ef;
+      border-radius: 8px;
+      background: var(--panel-soft);
+    }
+
+    .transfer-steps b {
+      width: 24px;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #52647a;
+      color: #fff;
+      font-size: 12px;
+    }
+
+    .transfer-steps span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
     .habit {
       display: grid;
       gap: 12px;
@@ -1302,7 +1401,8 @@
       .focus-actions,
       .xp-row,
       .undo-row,
-      .battle-actions {
+      .battle-actions,
+      .transfer-steps {
         grid-template-columns: 1fr;
       }
 
@@ -1365,6 +1465,28 @@
           <div class="metric"><b id="activeCount">0</b><span>今日の数</span></div>
         </div>
         <div class="habit-list" id="habitList"></div>
+        <details class="transfer-card" id="transferCard">
+          <summary>
+            <span>
+              <b>スマホ変更・データ引き継ぎ</b>
+              <small>無料で新しい端末へ移せます</small>
+            </span>
+          </summary>
+          <div class="transfer-body">
+            <div class="transfer-steps">
+              <div><b>1</b><span>今のスマホでコードを作る</span></div>
+              <div><b>2</b><span>LINEやメモに保存する</span></div>
+              <div><b>3</b><span>新しいスマホで貼り付けて復元</span></div>
+            </div>
+            <button type="button" id="copyTransferBtn">引き継ぎコードをコピー</button>
+            <label>
+              引き継ぎコード
+              <textarea id="transferCode" placeholder="新しいスマホでは、ここに引き継ぎコードを貼り付けます"></textarea>
+            </label>
+            <button type="button" class="secondary" id="restoreTransferBtn">このコードから復元</button>
+            <p class="muted" id="transferStatus">データはこの端末内に保存中。復元前には今のデータを自動で退避します。</p>
+          </div>
+        </details>
       </section>
 
       <aside class="stack">
@@ -1515,7 +1637,9 @@
       deleteHabitBtn: document.querySelector("#deleteHabitBtn"),
       dialogMode: document.querySelector("#dialogMode"),
       restoreInput: document.querySelector("#restoreInput"),
-      backupStatus: document.querySelector("#backupStatus")
+      backupStatus: document.querySelector("#backupStatus"),
+      transferCode: document.querySelector("#transferCode"),
+      transferStatus: document.querySelector("#transferStatus")
     };
 
     function isoDate(date = new Date()) {
@@ -2377,6 +2501,9 @@
       els.backupStatus.textContent = backup
         ? `自動バックアップ済み。習慣${habitCount}件、記録${recordCount}日分をこの端末に保護しています。`
         : `習慣${habitCount}件をこの端末に保存中。次の操作で自動バックアップも作られます。`;
+      if (els.transferStatus && !els.transferStatus.dataset.locked) {
+        els.transferStatus.textContent = `この端末に習慣${habitCount}件、記録${recordCount}日分を保存中。コードを作れば新しいスマホへ移せます。`;
+      }
     }
 
     function renderWeekdayPicker(selected = [0,1,2,3,4,5,6]) {
@@ -2464,31 +2591,93 @@
       showToast("削除しました");
     }
 
-    function exportData() {
-      const backup = btoa(unescape(encodeURIComponent(JSON.stringify(normalizeState(state)))));
-      navigator.clipboard?.writeText(backup).then(
-        () => showToast("バックアップをコピーしました"),
-        () => {
-          els.restoreInput.value = backup;
-          showToast("下の欄にバックアップを表示しました");
+    function encodeTransferData(value) {
+      const payload = {
+        app: "habit-dock",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        state: normalizeState(value)
+      };
+      const bytes = new TextEncoder().encode(JSON.stringify(payload));
+      let binary = "";
+      for (let i = 0; i < bytes.length; i += 0x8000) {
+        binary += String.fromCharCode(...bytes.slice(i, i + 0x8000));
+      }
+      return `HD1.${btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")}`;
+    }
+
+    function decodeTransferData(input) {
+      const code = String(input || "").trim().replace(/\s+/g, "");
+      if (!code) return null;
+      try {
+        if (code.startsWith("HD1.")) {
+          const base64 = code.slice(4).replace(/-/g, "+").replace(/_/g, "/");
+          const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+          const binary = atob(padded);
+          const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+          const payload = JSON.parse(new TextDecoder().decode(bytes));
+          return normalizeState(payload.state || payload.data || payload);
         }
+
+        const legacyText = decodeURIComponent(escape(atob(code)));
+        return normalizeState(JSON.parse(legacyText));
+      } catch (error) {
+        console.warn("Could not decode transfer data", error);
+        return null;
+      }
+    }
+
+    function syncTransferFields(code = "") {
+      if (els.transferCode) els.transferCode.value = code;
+      if (els.restoreInput) els.restoreInput.value = code;
+    }
+
+    function setTransferStatus(message) {
+      if (els.transferStatus) els.transferStatus.textContent = message;
+    }
+
+    function exportData() {
+      const backup = encodeTransferData(state);
+      syncTransferFields(backup);
+      setTransferStatus("引き継ぎコードを作りました。LINE、メモ、自分宛メールなどに保存してください。");
+
+      if (!navigator.clipboard?.writeText) {
+        showToast("コードを表示しました。長押しでコピーできます");
+        return;
+      }
+
+      navigator.clipboard.writeText(backup).then(
+        () => showToast("引き継ぎコードをコピーしました"),
+        () => showToast("コードを表示しました。長押しでコピーできます")
       );
     }
 
-    function restoreData() {
-      try {
-        const text = decodeURIComponent(escape(atob(els.restoreInput.value.trim())));
-        const restored = JSON.parse(text);
-        const normalized = normalizeState(restored);
-        if (!normalized) throw new Error("invalid");
-        state = normalized;
-        activeHabitId = null;
-        saveState();
-        render();
-        showToast("復元しました");
-      } catch (error) {
+    function restoreData(source = els.restoreInput) {
+      const sourceValue = typeof source === "string" ? source : source?.value;
+      const normalized = decodeTransferData(sourceValue || els.transferCode?.value || "");
+      if (!normalized) {
+        setTransferStatus("コードを読み取れませんでした。コピー漏れがないか確認してください。");
         showToast("復元できませんでした");
+        return;
       }
+
+      const habitCount = normalized.habits.length;
+      const recordCount = Object.keys(normalized.completions || {}).length + Object.keys(normalized.freezes || {}).length;
+      if (!confirm(`この端末のデータを退避してから、習慣${habitCount}件・記録${recordCount}日分を復元します。よろしいですか？`)) return;
+
+      const current = normalizeState(state);
+      if (current) {
+        writeStorage(STORAGE_BACKUP_KEY, current);
+        rememberSnapshot(current);
+      }
+
+      state = normalized;
+      activeHabitId = null;
+      saveState();
+      render();
+      setTransferStatus(`復元できました。習慣${habitCount}件、記録${recordCount}日分をこの端末に保存しました。`);
+      showMoment("restore", "復元できました", "新しいスマホでも同じ状態で使えます");
+      showToast("復元しました");
     }
 
     function resetToday() {
@@ -2556,7 +2745,9 @@
     document.querySelector("#resetTodayBtn").addEventListener("click", resetToday);
     document.querySelector("#exportBtn").addEventListener("click", exportData);
     document.querySelector("#copyBackupBtn").addEventListener("click", exportData);
-    document.querySelector("#restoreBtn").addEventListener("click", restoreData);
+    document.querySelector("#copyTransferBtn").addEventListener("click", exportData);
+    document.querySelector("#restoreBtn").addEventListener("click", () => restoreData(els.restoreInput));
+    document.querySelector("#restoreTransferBtn").addEventListener("click", () => restoreData(els.transferCode));
     els.form.addEventListener("submit", saveHabit);
     els.deleteHabitBtn.addEventListener("click", deleteHabit);
     ["gesturestart", "gesturechange", "gestureend"].forEach((eventName) => {
