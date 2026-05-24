@@ -2286,6 +2286,7 @@
       state.completions[key] = [...set];
       state.freezes[key] = [...frozen];
       setEffort(habitId, nextCount, key);
+      reconcileMonsterUnlocks([habitId]);
       saveState();
       render();
       celebrate(habitId, nextCount);
@@ -2303,6 +2304,7 @@
       if (current > 1) {
         setEffort(habitId, current - 1, key);
         state.completions[key] = [...set];
+        reconcileMonsterUnlocks([habitId]);
         saveState();
         render();
         showToast(`今日の回数を${current - 1}回に戻しました`);
@@ -2312,6 +2314,7 @@
       set.delete(habitId);
       state.completions[key] = [...set];
       setEffort(habitId, 0, key);
+      reconcileMonsterUnlocks([habitId]);
       saveState();
       render();
       showToast("今日の完了を取り消しました");
@@ -2331,6 +2334,7 @@
       }
       state.completions[key] = [...set];
       state.freezes[key] = [...frozen];
+      reconcileMonsterUnlocks([habitId]);
       saveState();
       render();
       if (set.has(habitId)) celebrate(habitId, effortCount(habitId, key));
@@ -2534,6 +2538,25 @@
     function rankForHabit(habit) {
       const defeatedCount = Object.values(defeatedMonsters(habit.id)).filter(Boolean).length;
       return defeatedCount ? monsters[Math.min(defeatedCount - 1, monsters.length - 1)].rank : "Start";
+    }
+
+    function reconcileMonsterUnlocks(habitIds = state.habits.map((habit) => habit.id)) {
+      if (!state.monsters) return;
+      habitIds.forEach((habitId) => {
+        const habit = state.habits.find((item) => item.id === habitId);
+        const defeated = state.monsters?.[habitId];
+        if (!habit || !defeated) return;
+
+        const xp = habitXp(habit).total;
+        monsters.forEach((monster) => {
+          if (defeated[monster.id] && xp < monster.threshold) {
+            delete defeated[monster.id];
+            seenMonsterPrompts.delete(`${habitId}:${monster.id}`);
+          }
+        });
+
+        if (!Object.keys(defeated).length) delete state.monsters[habitId];
+      });
     }
 
     function defeatMonster(habitId, monsterId) {
@@ -3162,6 +3185,7 @@
 
       state = normalized;
       activeHabitId = null;
+      reconcileMonsterUnlocks();
       saveState();
       render();
       setTransferStatus(`復元できました。習慣${habitCount}件、記録${recordCount}日分をこの端末に保存しました。`);
@@ -3170,9 +3194,14 @@
     }
 
     function resetToday() {
+      const affectedHabitIds = habitsFor(new Date()).map((habit) => habit.id);
       state.completions[isoDate()] = [];
       state.freezes[isoDate()] = [];
       delete state.efforts?.[isoDate()];
+      activeBattle = null;
+      els.battleOverlay.classList.remove("show");
+      els.battleOverlay.innerHTML = "";
+      reconcileMonsterUnlocks(affectedHabitIds);
       saveState();
       render();
       showToast("今日のチェックをリセットしました");
