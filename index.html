@@ -772,6 +772,8 @@
     }
 
     .boss-art-monster.battle-monster .boss-art-image {
+      width: 118%;
+      height: 118%;
       animation: bossImageBreathe 1.45s ease-in-out infinite;
     }
 
@@ -2703,7 +2705,7 @@
         return `
           <div class="${size === "battle" ? "battle-monster" : "mini-monster"} boss-art-monster ${hit ? "is-hit" : ""}" aria-hidden="true">
             <div class="boss-shockwave"></div>
-            <img class="boss-art-image" src="assets/abyss-dragon-boss.svg" alt="">
+            <img class="boss-art-image" src="assets/abyss-dragon-boss.png" alt="">
             <div class="boss-hit-flash"></div>
             ${size === "battle" ? `<div class="slash" id="slashEffect"></div>` : ""}
           </div>
