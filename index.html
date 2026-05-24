@@ -739,6 +739,10 @@
       animation: bossImageIdle 2.1s ease-in-out infinite;
     }
 
+    .boss-art-monster.monster-mid {
+      width: min(318px, 82vw);
+    }
+
     .boss-art-monster::before,
     .boss-art-monster::after {
       content: "";
@@ -775,6 +779,16 @@
       width: 118%;
       height: 118%;
       animation: bossImageBreathe 1.45s ease-in-out infinite;
+    }
+
+    .boss-art-monster.monster-weak .boss-art-image {
+      width: 102%;
+      height: 102%;
+    }
+
+    .boss-art-monster.monster-mid .boss-art-image {
+      width: 116%;
+      height: 116%;
     }
 
     .boss-art-monster.is-hit .boss-art-image {
@@ -1575,7 +1589,11 @@
     }
 
     .battle-title h2 {
-      font-size: 24px;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-size: clamp(20px, 5.4vw, 24px);
+      line-height: 1.22;
     }
 
     .battle-hp {
@@ -2209,8 +2227,8 @@
       { name: "今日のひとことメモ", category: "心のケア", time: "22:00", note: "よかったことを一行。", days: [0,1,2,3,4,5,6] }
     ];
     const monsters = [
-      { id: "weak", name: "冥淵の覇竜 ネルゲルド", threshold: 10, rank: "Rank 1", taps: 10 },
-      { id: "mid", name: "ミラージュナイト", threshold: 50, rank: "Rank 2", taps: 16 },
+      { id: "weak", name: "むくれ王 もちパンダ", threshold: 10, rank: "Rank 1", taps: 10 },
+      { id: "mid", name: "冥淵の覇竜 ネルゲルド", threshold: 50, rank: "Rank 2", taps: 16 },
       { id: "boss", name: "星喰いドラグーン", threshold: 100, rank: "Rank 3", taps: 24 }
     ];
 
@@ -2701,11 +2719,16 @@
     }
 
     function monsterMarkup(size = "mini", monsterId = "weak", hit = false) {
-      if (monsterId === "weak") {
+      const bossAssets = {
+        weak: "assets/panda-king-boss.png",
+        mid: "assets/abyss-dragon-boss.png"
+      };
+      if (bossAssets[monsterId]) {
+        const typeClass = monsterId === "mid" ? "monster-mid" : "monster-weak";
         return `
-          <div class="${size === "battle" ? "battle-monster" : "mini-monster"} boss-art-monster ${hit ? "is-hit" : ""}" aria-hidden="true">
+          <div class="${size === "battle" ? "battle-monster" : "mini-monster"} boss-art-monster ${typeClass} ${hit ? "is-hit" : ""}" aria-hidden="true">
             <div class="boss-shockwave"></div>
-            <img class="boss-art-image" src="assets/abyss-dragon-boss.png" alt="">
+            <img class="boss-art-image" src="${bossAssets[monsterId]}" alt="">
             <div class="boss-hit-flash"></div>
             ${size === "battle" ? `<div class="slash" id="slashEffect"></div>` : ""}
           </div>
