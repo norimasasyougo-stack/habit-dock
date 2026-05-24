@@ -2024,6 +2024,94 @@
       transform: translate(-50%, 0);
     }
 
+    .access-gate {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: grid;
+      place-items: center;
+      padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
+      background:
+        radial-gradient(circle at 50% 0%, rgba(19, 118, 232, .18), transparent 22rem),
+        linear-gradient(180deg, #f8fbff, #e8f2ff);
+    }
+
+    .access-card {
+      width: min(520px, 100%);
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border: 1px solid #bed3ef;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .96);
+      box-shadow: 0 24px 70px rgba(17, 103, 216, .18);
+    }
+
+    .access-brand {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .access-brand img {
+      width: 68px;
+      aspect-ratio: 1;
+      border-radius: 18px;
+      box-shadow: 0 10px 24px rgba(17, 103, 216, .16);
+    }
+
+    .access-form {
+      display: grid;
+      gap: 10px;
+    }
+
+    .access-note {
+      padding: 10px;
+      border: 1px solid #dce5ef;
+      border-radius: 8px;
+      background: #f6faff;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .member-pill {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      min-height: 32px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--mint-soft);
+      color: var(--mint-dark);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .member-pill.locked {
+      background: var(--rose-soft);
+      color: #813143;
+    }
+
+    .account-panel {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid #dce5ef;
+      border-radius: 8px;
+      background: var(--panel-soft);
+    }
+
+    body.access-locked .app,
+    body.access-locked .bottom-nav,
+    body.access-locked dialog,
+    body.access-locked .moment,
+    body.access-locked .battle-overlay {
+      pointer-events: none;
+      user-select: none;
+    }
+
     @media (max-width: 820px) {
       body { font-size: 15px; }
 
@@ -2124,7 +2212,7 @@
 
       header .actions {
         display: grid;
-        grid-template-columns: 1fr 44px;
+        grid-template-columns: 1fr 44px 44px;
       }
 
       .section-head {
@@ -2183,6 +2271,7 @@
       <div class="actions">
         <button type="button" id="addHabitBtn">習慣を追加</button>
         <button type="button" class="icon secondary" id="exportBtn" title="データを書き出し">⇧</button>
+        <button type="button" class="icon secondary" id="accountBtn" title="アカウント">人</button>
       </div>
     </header>
 
@@ -2331,14 +2420,63 @@
     </form>
   </dialog>
 
+  <dialog id="accountDialog">
+    <div class="dialog-inner">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">y.会員</p>
+          <h2>アカウント管理</h2>
+        </div>
+        <button type="button" class="icon secondary" id="closeAccountDialogBtn" title="閉じる">×</button>
+      </div>
+      <div class="account-panel">
+        <span class="member-pill" id="memberStatusPill">free</span>
+        <p class="muted" id="memberEmailText">未ログイン</p>
+        <p class="muted">今は無料ログインで会員状態を管理しています。将来Stripeを接続すると、支払い成功でactive、解約でcanceledへ自動更新されます。</p>
+      </div>
+      <div class="actions dialog-actions">
+        <button type="button" class="secondary" id="logoutBtn">ログアウト</button>
+        <button type="button" class="danger" id="cancelMembershipBtn">解約状態にする</button>
+        <button type="button" id="reactivateMembershipBtn">無料で再開</button>
+      </div>
+    </div>
+  </dialog>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div class="moment" id="moment" aria-live="polite"></div>
   <div class="battle-overlay" id="battleOverlay" role="dialog" aria-modal="true" aria-labelledby="battleTitle"></div>
+  <section class="access-gate" id="accessGate" aria-live="polite" hidden>
+    <div class="access-card">
+      <div class="access-brand">
+        <img src="icons/icon-192-v3.png" alt="">
+        <div>
+          <p class="eyebrow">y. member apps</p>
+          <h2>Habit Dock</h2>
+          <p class="muted">ログインすると、会員状態を確認してアプリを開きます。</p>
+        </div>
+      </div>
+      <div id="accessLockedMessage" class="access-note" hidden></div>
+      <form class="access-form" id="accessForm">
+        <label>
+          メールアドレス
+          <input id="accessEmail" type="email" autocomplete="email" required placeholder="you@example.com">
+        </label>
+        <label>
+          パスワード
+          <input id="accessPassword" type="password" autocomplete="current-password" required minlength="4" placeholder="4文字以上">
+        </label>
+        <button type="submit" id="accessSubmitBtn">無料ログイン / 登録</button>
+      </form>
+      <button type="button" class="secondary" id="accessReactivateBtn" hidden>無料会員として再開する</button>
+      <p class="muted">この段階では端末内ログインです。本番販売時は同じ判定をSupabase AuthとStripeに接続します。</p>
+    </div>
+  </section>
 
   <script>
     const STORAGE_KEY = "habit-dock-v1";
     const STORAGE_BACKUP_KEY = "habit-dock-v1-auto-backup";
     const STORAGE_SNAPSHOTS_KEY = "habit-dock-v1-snapshots";
+    const ACCESS_KEY = "habit-dock-access-v1";
     const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
     const templates = [
       { name: "英語スピーキング", category: "学習", time: "20:00", note: "1レッスンだけ。日曜は休みでOK。", days: [1,2,3,4,5,6] },
@@ -2354,6 +2492,7 @@
     ];
 
     let state = loadState();
+    let access = loadAccess();
     let activeHabitId = null;
     let activeBattle = null;
     const seenMonsterPrompts = new Set();
@@ -2374,6 +2513,15 @@
       moment: document.querySelector("#moment"),
       battleOverlay: document.querySelector("#battleOverlay"),
       dialog: document.querySelector("#habitDialog"),
+      accountDialog: document.querySelector("#accountDialog"),
+      accessGate: document.querySelector("#accessGate"),
+      accessForm: document.querySelector("#accessForm"),
+      accessEmail: document.querySelector("#accessEmail"),
+      accessPassword: document.querySelector("#accessPassword"),
+      accessReactivateBtn: document.querySelector("#accessReactivateBtn"),
+      accessLockedMessage: document.querySelector("#accessLockedMessage"),
+      memberStatusPill: document.querySelector("#memberStatusPill"),
+      memberEmailText: document.querySelector("#memberEmailText"),
       form: document.querySelector("#habitForm"),
       habitId: document.querySelector("#habitId"),
       habitName: document.querySelector("#habitName"),
@@ -2388,6 +2536,174 @@
       transferCode: document.querySelector("#transferCode"),
       transferStatus: document.querySelector("#transferStatus")
     };
+
+    function fallbackAccess() {
+      return {
+        userId: "",
+        email: "",
+        plan: "y-free",
+        status: "signed_out",
+        signedIn: false,
+        passwordHash: "",
+        salt: "",
+        createdAt: "",
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    function normalizeAccess(value) {
+      if (!value || typeof value !== "object") return fallbackAccess();
+      return {
+        userId: String(value.userId || ""),
+        email: String(value.email || ""),
+        plan: String(value.plan || "y-free"),
+        status: String(value.status || "signed_out"),
+        signedIn: Boolean(value.signedIn),
+        passwordHash: String(value.passwordHash || ""),
+        salt: String(value.salt || ""),
+        createdAt: String(value.createdAt || ""),
+        updatedAt: String(value.updatedAt || new Date().toISOString())
+      };
+    }
+
+    function loadAccess() {
+      try {
+        return normalizeAccess(JSON.parse(localStorage.getItem(ACCESS_KEY)));
+      } catch (error) {
+        console.warn("Could not read access state", error);
+        return fallbackAccess();
+      }
+    }
+
+    function saveAccess() {
+      access.updatedAt = new Date().toISOString();
+      localStorage.setItem(ACCESS_KEY, JSON.stringify(access));
+    }
+
+    function activeAccessStatuses() {
+      return new Set(["free", "trialing", "active"]);
+    }
+
+    function isAccessAllowed() {
+      return Boolean(access.email && access.signedIn && activeAccessStatuses().has(access.status));
+    }
+
+    function accessStatusLabel(status = access.status) {
+      const labels = {
+        signed_out: "ログアウト中",
+        free: "無料会員",
+        trialing: "トライアル中",
+        active: "有料会員",
+        past_due: "支払い確認中",
+        canceled: "解約済み",
+        expired: "期限切れ"
+      };
+      return labels[status] || status;
+    }
+
+    function accessLockedText() {
+      if (!access.email) return "無料ログインを作成すると、会員状態を確認してHabit Dockを使えます。";
+      if (!access.signedIn) return "パスワードを入力してログインしてください。";
+      if (access.status === "canceled") return "このアカウントは解約済みです。無料で再開すると再び使えます。";
+      if (access.status === "expired") return "会員期限が切れています。再開すると再び使えます。";
+      if (access.status === "past_due") return "支払い確認中のためロックしています。";
+      return "ログインするとHabit Dockを使えます。";
+    }
+
+    async function hashPassword(password, salt) {
+      const text = `${salt}:${password}`;
+      if (!crypto.subtle) return btoa(unescape(encodeURIComponent(text)));
+      const bytes = new TextEncoder().encode(text);
+      const digest = await crypto.subtle.digest("SHA-256", bytes);
+      return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+    }
+
+    function randomSalt() {
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function handleAccessSubmit(event) {
+      event.preventDefault();
+      const email = els.accessEmail.value.trim().toLowerCase();
+      const password = els.accessPassword.value;
+      if (!email || password.length < 4) {
+        showToast("メールと4文字以上のパスワードを入力してください");
+        return;
+      }
+
+      if (access.email && access.email !== email) {
+        showToast("この端末では別の会員で登録済みです。ログアウトしてから切り替えてください");
+        return;
+      }
+
+      if (!access.email) {
+        const salt = randomSalt();
+        access = {
+          userId: crypto.randomUUID(),
+          email,
+          plan: "y-free",
+          status: "free",
+          signedIn: true,
+          passwordHash: await hashPassword(password, salt),
+          salt,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        saveAccess();
+        renderAccess();
+        showToast("無料会員として登録しました");
+        return;
+      }
+
+      const inputHash = await hashPassword(password, access.salt);
+      if (inputHash !== access.passwordHash) {
+        showToast("パスワードが違います");
+        return;
+      }
+      if (!activeAccessStatuses().has(access.status)) {
+        renderAccess();
+        showToast("会員状態がロックされています");
+        return;
+      }
+      access.signedIn = true;
+      saveAccess();
+      renderAccess();
+      showToast("ログインしました");
+    }
+
+    function setMembershipStatus(status) {
+      if (!access.email && status !== "signed_out") {
+        showToast("先に無料ログインを作成してください");
+        return;
+      }
+      access.status = status;
+      access.signedIn = activeAccessStatuses().has(status);
+      saveAccess();
+      renderAccess();
+    }
+
+    function logoutAccess() {
+      access.signedIn = false;
+      saveAccess();
+      els.accountDialog.close();
+      renderAccess();
+      showToast("ログアウトしました");
+    }
+
+    function renderAccess() {
+      const allowed = isAccessAllowed();
+      document.body.classList.toggle("access-locked", !allowed);
+      els.accessGate.hidden = allowed;
+      els.accessLockedMessage.hidden = false;
+      els.accessLockedMessage.textContent = accessLockedText();
+      els.memberStatusPill.textContent = accessStatusLabel();
+      els.memberStatusPill.classList.toggle("locked", !allowed);
+      els.memberEmailText.textContent = access.email ? `${access.email} / ${access.plan}` : "未ログイン";
+      if (access.email) els.accessEmail.value = access.email;
+      els.accessReactivateBtn.hidden = !(access.email && !activeAccessStatuses().has(access.status));
+    }
 
     function isoDate(date = new Date()) {
       const y = date.getFullYear();
@@ -3533,6 +3849,7 @@
     }
 
     function render() {
+      renderAccess();
       renderSummary();
       renderHabits();
       renderCalendar();
@@ -3542,6 +3859,25 @@
     }
 
     document.querySelector("#addHabitBtn").addEventListener("click", () => openHabitDialog());
+    document.querySelector("#accountBtn").addEventListener("click", () => els.accountDialog.showModal());
+    document.querySelector("#closeAccountDialogBtn").addEventListener("click", () => els.accountDialog.close());
+    document.querySelector("#logoutBtn").addEventListener("click", logoutAccess);
+    document.querySelector("#cancelMembershipBtn").addEventListener("click", () => {
+      if (!confirm("解約状態にすると、この端末ではHabit Dockがロックされます。よろしいですか？")) return;
+      setMembershipStatus("canceled");
+      els.accountDialog.close();
+      showToast("解約状態にしました");
+    });
+    document.querySelector("#reactivateMembershipBtn").addEventListener("click", () => {
+      setMembershipStatus("free");
+      els.accountDialog.close();
+      showToast("無料会員として再開しました");
+    });
+    els.accessReactivateBtn.addEventListener("click", () => {
+      setMembershipStatus("free");
+      showToast("無料会員として再開しました");
+    });
+    els.accessForm.addEventListener("submit", handleAccessSubmit);
     document.querySelector("#closeDialogBtn").addEventListener("click", closeHabitDialog);
     document.querySelector("#cancelDialogBtn").addEventListener("click", closeHabitDialog);
     document.querySelector("#resetTodayBtn").addEventListener("click", resetToday);
