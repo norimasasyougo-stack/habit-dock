@@ -3118,6 +3118,14 @@
       return monsters.find((monster) => xp >= monster.threshold && !defeated[monster.id]);
     }
 
+    function unlockedMonsters(habit, xp) {
+      const defeated = defeatedMonsters(habit.id);
+      return monsters.filter((monster) => xp >= monster.threshold).map((monster) => ({
+        ...monster,
+        defeated: Boolean(defeated[monster.id])
+      }));
+    }
+
     function rankForHabit(habit) {
       const defeatedCount = Object.values(defeatedMonsters(habit.id)).filter(Boolean).length;
       return defeatedCount ? monsters[Math.min(defeatedCount - 1, monsters.length - 1)].rank : "Start";
@@ -3162,7 +3170,7 @@
         boss: "assets/final-overlord-boss.png"
       };
       if (bossAssets[monsterId]) {
-        const typeClass = monsterId === "mid" ? "monster-mid" : "monster-weak";
+        const typeClass = monsterId === "mid" ? "monster-mid" : monsterId === "boss" ? "monster-boss" : "monster-weak";
         return `
           <div class="${size === "battle" ? "battle-monster" : "mini-monster"} boss-art-monster ${typeClass} ${hit ? "is-hit" : ""}" aria-hidden="true">
             <div class="boss-shockwave"></div>
@@ -3358,6 +3366,7 @@
       const attempts = effortCount(habit.id);
       const xp = habitXp(habit);
       const monster = currentMonster(habit, xp.total);
+      const unlocked = unlockedMonsters(habit, xp.total);
       const statusText = done ? "今日完了" : frozen ? "今日は休みで保護" : "今日まだ";
       const graduationText = month.graduated ? "30日卒業済み。優先度は下がりますが記録は続きます。" : `習慣化まであと${month.remaining}日`;
       const otherToday = todayHabits.filter((item) => item.id !== habit.id);
@@ -3411,17 +3420,21 @@
             <p class="muted">素のXP ${xp.raw} ・ 未継続ペナルティ -${xp.penalty}XP（${xp.missed}日）</p>
           </div>
 
-          ${monster ? `
+          ${unlocked.length ? `
             <div class="monster-panel">
-              <div class="monster-teaser">
-                ${monsterMarkup("mini", monster.id)}
-                <div>
-                  <p class="eyebrow">${monster.threshold}XP 到達</p>
-                  <h3>${monster.name}が現れた</h3>
-                  <p class="muted">${monster.taps}回タップで討伐できます。</p>
+              ${unlocked.map((item) => `
+                <div class="monster-teaser">
+                  ${monsterMarkup("mini", item.id)}
+                  <div>
+                    <p class="eyebrow">${item.threshold}XP ${item.defeated ? "討伐済み" : "到達"}</p>
+                    <h3>${item.defeated ? `${item.name}を討伐済み` : `${item.name}が現れた`}</h3>
+                    <p class="muted">${item.defeated ? "再戦できます。XPを落とすと討伐記録も戻ります。" : `${item.taps}回タップで討伐できます。`}</p>
+                  </div>
                 </div>
-              </div>
-              <button type="button" data-battle="${habit.id}:${monster.id}">討伐に向かう</button>
+                <button type="button" ${item.defeated ? "class=\"secondary\"" : ""} data-battle="${habit.id}:${item.id}">
+                  ${item.defeated ? "もう一度戦う" : "討伐に向かう"}
+                </button>
+              `).join("")}
             </div>
           ` : ""}
 
