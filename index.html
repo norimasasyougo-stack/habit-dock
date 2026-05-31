@@ -2860,6 +2860,8 @@
     }
 
     function addEffort(habitId) {
+      const habit = state.habits.find((item) => item.id === habitId);
+      const beforeXp = habit ? habitXp(habit).total : 0;
       const key = isoDate();
       const nextCount = effortCount(habitId, key) + 1;
       const set = doneSet(key);
@@ -2870,9 +2872,13 @@
       state.freezes[key] = [...frozen];
       setEffort(habitId, nextCount, key);
       reconcileMonsterUnlocks([habitId]);
+      const afterXp = habit ? habitXp(habit).total : 0;
+      const unlockedMonster = habit ? newlyUnlockedMonster(habit, beforeXp, afterXp) : null;
+      if (unlockedMonster) seenMonsterPrompts.add(`${habitId}:${unlockedMonster.id}`);
       saveState();
       render();
       celebrate(habitId, nextCount);
+      openUnlockedMonsterBattle(habitId, unlockedMonster);
     }
 
     function undoEffort(habitId) {
@@ -2904,9 +2910,12 @@
     }
 
     function toggleHabit(habitId) {
+      const habit = state.habits.find((item) => item.id === habitId);
+      const beforeXp = habit ? habitXp(habit).total : 0;
       const key = isoDate();
       const set = doneSet(key);
       const frozen = freezeSet(key);
+      let completedNow = false;
       if (set.has(habitId)) {
         set.delete(habitId);
         setEffort(habitId, 0, key);
@@ -2914,13 +2923,18 @@
         set.add(habitId);
         frozen.delete(habitId);
         setEffort(habitId, Math.max(1, effortCount(habitId, key)), key);
+        completedNow = true;
       }
       state.completions[key] = [...set];
       state.freezes[key] = [...frozen];
       reconcileMonsterUnlocks([habitId]);
+      const afterXp = habit ? habitXp(habit).total : 0;
+      const unlockedMonster = completedNow && habit ? newlyUnlockedMonster(habit, beforeXp, afterXp) : null;
+      if (unlockedMonster) seenMonsterPrompts.add(`${habitId}:${unlockedMonster.id}`);
       saveState();
       render();
       if (set.has(habitId)) celebrate(habitId, effortCount(habitId, key));
+      openUnlockedMonsterBattle(habitId, unlockedMonster);
     }
 
     function toggleFreeze(habitId) {
@@ -3116,6 +3130,21 @@
     function currentMonster(habit, xp) {
       const defeated = defeatedMonsters(habit.id);
       return monsters.find((monster) => xp >= monster.threshold && !defeated[monster.id]);
+    }
+
+    function newlyUnlockedMonster(habit, beforeXp, afterXp) {
+      const defeated = defeatedMonsters(habit.id);
+      return monsters.find((monster) => (
+        beforeXp < monster.threshold &&
+        afterXp >= monster.threshold &&
+        !defeated[monster.id]
+      ));
+    }
+
+    function openUnlockedMonsterBattle(habitId, monster) {
+      if (!monster) return;
+      seenMonsterPrompts.add(`${habitId}:${monster.id}`);
+      setTimeout(() => openMonsterBattle(habitId, monster.id), 430);
     }
 
     function unlockedMonsters(habit, xp) {
